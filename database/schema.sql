@@ -1,0 +1,92 @@
+-- Database schema for AVG Vragenlijsten
+-- Volgt de verstrekte ERD
+
+CREATE DATABASE IF NOT EXISTS vereniging_avg CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE vereniging_avg;
+
+-- UUIDs worden opgeslagen als CHAR(36) voor leesbaarheid in deze fase
+-- In een productieomgeving met miljoenen records zou BINARY(16) sneller zijn
+
+CREATE TABLE organizations (
+    id CHAR(36) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    contact_person VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    phone_enabled BOOLEAN DEFAULT FALSE,
+    logo_path VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE campaigns (
+    id CHAR(36) PRIMARY KEY,
+    organization_id CHAR(36) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    email_subject VARCHAR(255) NOT NULL,
+    email_body TEXT NOT NULL,
+    reminder_enabled BOOLEAN DEFAULT FALSE,
+    reminder_days INTEGER DEFAULT 7,
+    default_no_after_days INTEGER,
+    start_date DATE,
+    end_date DATE,
+    report_generated_at TIMESTAMP NULL,
+    auto_delete_at TIMESTAMP NULL,
+    status ENUM('draft', 'active', 'paused', 'completed', 'deleted') DEFAULT 'draft',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE questions (
+    id CHAR(36) PRIMARY KEY,
+    campaign_id CHAR(36) NOT NULL,
+    question_text VARCHAR(255) NOT NULL,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE persons (
+    id CHAR(36) PRIMARY KEY,
+    campaign_id CHAR(36) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    email_status ENUM('pending', 'sent', 'delivered', 'failed', 'bounced') DEFAULT 'pending',
+    token VARCHAR(64) UNIQUE,
+    token_expired BOOLEAN DEFAULT FALSE,
+    first_sent_at TIMESTAMP NULL,
+    reminder_sent_at TIMESTAMP NULL,
+    responded_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE answers (
+    id CHAR(36) PRIMARY KEY,
+    person_id CHAR(36) NOT NULL,
+    question_id CHAR(36) NOT NULL,
+    answer BOOLEAN,
+    answered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE,
+    FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE email_logs (
+    id CHAR(36) PRIMARY KEY,
+    person_id CHAR(36) NOT NULL,
+    campaign_id CHAR(36) NOT NULL,
+    type ENUM('initial', 'reminder', 'confirmation') NOT NULL,
+    status ENUM('success', 'failed', 'bounced') NOT NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE,
+    FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE reports (
+    id CHAR(36) PRIMARY KEY,
+    campaign_id CHAR(36) NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    downloaded_at TIMESTAMP NULL,
+    FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
