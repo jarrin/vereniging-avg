@@ -24,6 +24,10 @@ if ($path === '/' || $path === '/index.php') {
     echo $twig->render('home.twig', [
         'title' => 'AVG Consent - Toestemmingsbeheer vereenvoudigd',
     ]);
+} elseif ($path === '/dashboard') {
+    echo $twig->render('dashboard.twig', [
+        'title' => 'Dashboard - AVG Consent',
+    ]);
 } else {
     header("HTTP/1.0 404 Not Found");
     echo "404 Not Found";
