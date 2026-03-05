@@ -1,0 +1,20 @@
+{% extends 'layout.twig' %}
+
+{% block content %}
+	<section class="dashboard-header">
+		<div class="dashboard-container">
+			<div class="dashboard-top">
+				<div class="dashboard-title-section">
+					<h1 class="dashboard-title">Dashboard</h1>
+					<p class="dashboard-subtitle">Beheer uw toestemmingscampagnes</p>
+				</div>
+				<div class="dashboard-actions">
+					<a href="/campagne/nieuw" class="btn btn-primary btn-new-campaign">
+						<i data-lucide="plus" size="20"></i>
+						Nieuwe campagne
+					</a>
+				</div>
+			</div>
+		</div>
+	</section>
+{% endblock %}
