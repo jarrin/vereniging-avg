@@ -12,7 +12,9 @@
 						
 						<div class="campaign-steps-circles">
 							<div class="campaign-step-item">
-								<div class="campaign-step-circle">1</div>
+								<div class="campaign-step-circle active">
+									<i data-lucide="check-circle" size="24"></i>
+								</div>
 								<p class="campaign-step-label">Verenigingsgegevens</p>
 							</div>
 							<div class="campaign-step-item">
@@ -39,18 +41,26 @@
 							</div>
 						</div>
 
-						<p class="campaign-form-subtitle">Definieer maximaal 5 vragen die uw leden met Ja of Nee beantwoorden</p>
+						<p class="campaign-question-instructions">Definieer maximaal 5 vragen die uw leden met Ja of Nee beantwoorden</p>
+
+						<div class="campaign-question-group">
+							<div class="campaign-question-number">1</div>
+							<div class="campaign-question-field">
+								<textarea 
+									id="question-1" 
+									name="question_1" 
+									class="campaign-form-input" 
+									placeholder="Bv. Mag ik u op de hoogte houden?"
+									required
+								></textarea>
+							</div>
+						</div>
 
 						<div class="campaign-form-group">
-							<label for="question-1" class="campaign-form-label">Vraag 1 *</label>
-							<input 
-								type="text" 
-								id="question-1" 
-								name="question_1" 
-								class="campaign-form-input" 
-								placeholder="Bv. Mag ik u op de hoogte houden?"
-								required
-							>
+							<button type="button" class="campaign-add-question-button">
+							<i data-lucide="plus" size="17"></i>
+							<span>Vraag toevoegen</span>
+							</button>
 						</div>
 					</div>
 
