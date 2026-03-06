@@ -36,6 +36,7 @@ if ($action === 'login' || $action === 'register') {
     } elseif ($action === 'register') {
         require __DIR__ . '/register.php';
     }
+}
 
 if ($path === '/' || $path === '/index.php') {
     echo $twig->render('home.twig', [
