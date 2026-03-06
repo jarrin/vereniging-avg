@@ -531,6 +531,7 @@ section {
   font-size: 0.95rem;
   font-family: inherit;
   background-color: #f9fafb;
+  resize: vertical;
 }
 
 .campaign-form-input::placeholder {
@@ -541,6 +542,44 @@ section {
   outline: none;
   border-color: #9ca3af;
   box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.1);
+}
+
+.campaign-question-instructions {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0;
+  padding-left: 32px;
+  margin-top: 25px;
+}
+
+.campaign-question-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 0 2rem;
+}
+
+.campaign-question-number {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  background-color: rgba(30, 138, 135, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e8a87;
+  flex-shrink: 0;
+}
+
+.campaign-question-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
 }
 
 .campaign-form-group-toggle {
@@ -626,6 +665,32 @@ section {
   color: #6b7280;
 }
 
+.campaign-add-question-button {
+  display: inline-flex;
+  align-items: center;
+  width: 25%;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #111827;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.campaign-add-question-button i {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.campaign-add-question-button:hover {
+  background-color: #e5e7eb;
+}
+
 .campaign-form-navigation {
   display: flex;
   justify-content: space-between;
@@ -654,7 +719,7 @@ section {
 
 .campaign-btn-nav-prev {
   background-color: #f9fafb;
-  color: rgba(209, 213, 219, 0.8);
+  color: #111827;
   border: 1px solid #d1d5db;
 }
 
@@ -663,9 +728,9 @@ section {
 }
 
 .campaign-btn-nav-next {
-  background-color: rgba(30, 138, 135, 0.3);
-  color: white;
-  border: 1px solid rgba(30, 138, 135, 0.3);
+  background-color: #1e8a87;
+  color: #fff;
+  border: 1px solid #d1d5db;
 }
 
 .campaign-btn-nav-next:hover {
