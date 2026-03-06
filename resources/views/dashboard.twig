@@ -1,0 +1,131 @@
+{% extends 'layout.twig' %}
+
+{% block content %}
+	<div class="dashboard-header">
+		<div class="dashboard-container">
+			<div class="dashboard-top">
+				<div class="dashboard-title-section">
+					<h1 class="dashboard-title">Dashboard</h1>
+					<p class="dashboard-subtitle">Beheer uw toestemmingscampagnes</p>
+				</div>
+				<div class="dashboard-actions">
+					<a href="/campagne/nieuw" class="btn btn-primary btn-new-campaign">
+						<i data-lucide="plus" size="20"></i>
+						Nieuwe campagne
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="dashboard-stats">
+		<div class="dashboard-container">
+			<div class="stats-grid">
+				<div class="stat-box">
+					<div class="stat-icon icon-gray">
+						<i data-lucide="users"></i>
+					</div>
+					<div class="stat-content">
+						<p class="stat-label">Totaal leden</p>
+						<p class="stat-number">365</p>
+					</div>
+				</div>
+
+				<div class="stat-box">
+					<div class="stat-icon icon-green">
+						<i data-lucide="check-circle"></i>
+					</div>
+					<div class="stat-content">
+						<p class="stat-label">Gereageerd</p>
+						<p class="stat-number">307</p>
+					</div>
+				</div>
+
+				<div class="stat-box">
+					<div class="stat-icon icon-green">
+						<i data-lucide="mail"></i>
+					</div>
+					<div class="stat-content">
+						<p class="stat-label">Actieve Campagnes</p>
+						<p class="stat-number">1</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="dashboard-campaigns">
+		<div class="dashboard-container">
+			<div class="campaigns-list">
+				<!-- Campaign 1 - Active -->
+				<div class="campaign-box campaign-active">
+					<div class="campaign-header">
+						<div class="campaign-info">
+							<h3 class="campaign-title">Jaarlijkse toestemming 2025</h3>
+							<p class="campaign-deadline">
+								<i data-lucide="clock" size="16"></i>
+								Deadline: 15-03-2025
+							</p>
+						</div>
+						<div class="campaign-badge badge-active">Actief</div>
+					</div>
+					<div class="campaign-progress">
+						<div class="progress-info">
+							<span class="progress-label">189 / 245 gereageerd</span>
+							<span class="progress-percentage">77%</span>
+						</div>
+						<div class="progress-bar">
+							<div class="progress-fill" style="width: 77%"></div>
+						</div>
+						<div class="progress-warning">
+							<i data-lucide="alert-triangle" size="16"></i>
+							<span>56 open</span>
+						</div>
+					</div>
+				</div>
+
+				<!-- Campaign 2 - Completed -->
+				<div class="campaign-box campaign-completed">
+					<div class="campaign-header">
+						<div class="campaign-info">
+							<h3 class="campaign-title">Nieuwsbrief Toestemming</h3>
+							<p class="campaign-deadline">
+								<i data-lucide="clock" size="16"></i>
+								Deadline: 15-03-2024
+							</p>
+						</div>
+						<div class="campaign-badge badge-completed">Afgerond</div>
+					</div>
+					<div class="campaign-progress">
+						<div class="progress-info">
+							<span class="progress-label">118 / 120 gereageerd</span>
+							<span class="progress-percentage">98%</span>
+						</div>
+						<div class="progress-bar">
+							<div class="progress-fill" style="width: 98%"></div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Campaign 3 - Concept -->
+				<div class="campaign-box campaign-concept">
+					<div class="campaign-header">
+						<div class="campaign-info">
+							<h3 class="campaign-title">Foto Toestemming Jeugd</h3>
+						</div>
+						<div class="campaign-badge badge-concept">Concept</div>
+					</div>
+					<div class="campaign-progress">
+						<div class="progress-info">
+							<span class="progress-label">0 / 0 gereageerd</span>
+							<span class="progress-percentage">0%</span>
+						</div>
+						<div class="progress-bar">
+							<div class="progress-fill" style="width: 0%"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}

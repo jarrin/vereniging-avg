@@ -29,7 +29,6 @@ $isLoggedIn = AuthController::isLoggedIn();
 // Basic routing (very simple for now)
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $action = $_GET['action'] ?? null;
-
 // Public pages (no login required)
 if ($action === 'login' || $action === 'register') {
     if ($action === 'login') {
@@ -37,6 +36,26 @@ if ($action === 'login' || $action === 'register') {
     } elseif ($action === 'register') {
         require __DIR__ . '/register.php';
     }
+
+if ($path === '/' || $path === '/index.php') {
+    echo $twig->render('home.twig', [
+        'title' => 'AVG Consent - Toestemmingsbeheer vereenvoudigd',
+    ]);
+} elseif ($path === '/dashboard') {
+    echo $twig->render('dashboard.twig', [
+        'title' => 'Dashboard - AVG Consent',
+    ]);
+} elseif ($path === '/campagne/nieuw') {
+    header('Location: /campagne/form/verenigingsgegevens');
+    exit;
+} elseif ($path === '/campagne/form/verenigingsgegevens') {
+    echo $twig->render('nieuwe_campagne/verenigingsgegevens.twig', [
+        'title' => 'Verenigingsgegevens - AVG Consent',
+    ]);
+} elseif ($path === '/campagne/form/vragen') {
+    echo $twig->render('nieuwe_campagne/vragen.twig', [
+        'title' => 'Vragen - AVG Consent',
+    ]);
 } else {
     // Protected pages - require login
     if (!$isLoggedIn) {
