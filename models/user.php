@@ -6,7 +6,6 @@ class User
 {
     // public properties for easier access in controllers/views
     public $id;
-    public $organization_id;
     public $username;
     public $email;
     public $created_at;
@@ -23,7 +22,6 @@ class User
 
         if ($data) {
             $this->id = $data['id'] ?? null;
-            $this->organization_id = $data['organization_id'] ?? null;
             $this->username = $data['username'] ?? null;
             $this->email = $data['email'] ?? null;
             $this->created_at = $data['created_at'] ?? null;
@@ -110,25 +108,20 @@ class User
         }
     }
 
-    public static function getAllByOrganization(string $organizationId): array
+    public static function getAllUsers(): array
     {
         $pdo = Database::getConnection();
-        $stmt = $pdo->prepare('SELECT * FROM users WHERE organization_id = ? ORDER BY created_at DESC');
-        $stmt->execute([$organizationId]);
-        $rows = $stmt->fetchAll();
-        $results = [];
-        foreach ($rows as $r) {
-            $results[] = new self($r);
-        }
-        return $results;
+        $stmt = $pdo->prepare("SELECT * FROM users ORDER BY created_at DESC");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public static function register(string $username, string $email, string $password, string $organizationId): array
+    public static function register(string $username, string $email, string $password): array
     {
         $username = trim($username);
         $email = trim($email);
 
-        if ($username === '' || $email === '' || $password === '' || $organizationId === '') {
+        if ($username === '' || $email === '' || $password === '') {
             return ['success' => false, 'id' => null, 'message' => 'Vul alle verplichte velden in.'];
         }
 
@@ -156,9 +149,9 @@ class User
         $password_hash = password_hash($password, PASSWORD_DEFAULT);
         $id = uniqid('', true); // Generate unique ID for UUID-like string
 
-        $stmt = $pdo->prepare('INSERT INTO users (id, organization_id, username, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())');
+        $stmt = $pdo->prepare('INSERT INTO users (id, username, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())');
         try {
-            $stmt->execute([$id, $organizationId, $username, $email, $password_hash]);
+            $stmt->execute([$id, $username, $email, $password_hash]);
             return ['success' => true, 'id' => $id, 'message' => 'Gebruiker geregistreerd.'];
         } catch (\PDOException $e) {
             return ['success' => false, 'id' => null, 'message' => 'Database fout: ' . $e->getMessage()];
@@ -233,7 +226,6 @@ class User
         $_SESSION['user_id'] = $user->id;
         $_SESSION['username'] = $user->username;
         $_SESSION['email'] = $user->email;
-        $_SESSION['organization_id'] = $user->organization_id;
 
         if ($remember) {
             $token = bin2hex(random_bytes(32));
@@ -282,14 +274,6 @@ class User
         $stmt = $pdo->prepare('SELECT id FROM users WHERE username = ? LIMIT 1');
         $stmt->execute([$username]);
         return (bool)$stmt->fetch();
-    }
-
-    public static function getAllUsersByOrganization(string $organizationId): array
-    {
-        $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE organization_id = ? ORDER BY created_at DESC");
-        $stmt->execute([$organizationId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public static function deactivateUser(string $userId): array
