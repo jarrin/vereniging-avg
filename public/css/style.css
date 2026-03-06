@@ -51,11 +51,10 @@ body {
   height: 80px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #d1d5db;
   position: sticky;
   top: 0;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
+  background-color: #f9fafb;
   z-index: 1000;
 }
 
@@ -356,7 +355,8 @@ section {
 /* Footer */
 .footer {
   padding: 60px 0;
-  border-top: 1px solid #f1f5f9;
+  background-color: #e8eaed;
+  border-top: 1px solid #d1d5db;
 }
 
 .footer-content {
@@ -407,7 +407,7 @@ section {
 
 .dashboard-header {
   margin: 5px 20px;
-  background-color: var(--white);
+  background-color: transparent;
 }
 
 .dashboard-top {
@@ -436,7 +436,7 @@ section {
 /* Dashboard Stats */
 .dashboard-stats {
   margin: 30px 20px;
-  background-color: var(--white);
+  background-color: transparent;
 }
 
 .stats-grid {
@@ -498,7 +498,7 @@ section {
 /* Dashboard Campaigns */
 .dashboard-campaigns {
   margin: 30px 20px;
-  background-color: var(--white);
+  background-color: transparent;
 }
 
 .campaigns-list {
