@@ -737,6 +737,81 @@ section {
   background-color: rgba(30, 138, 135, 0.4);
 }
 
+.campaign-available-variables {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #f3f4f6;
+  min-height: auto;
+}
+
+.variables-label-inline {
+  font-size: 0.95rem;
+  color: #111827;
+  font-weight: 500;
+}
+
+.variables-list {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.variable-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.875rem;
+  background-color: rgba(30, 138, 135, 0.08);
+  color: #1e8a87;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  width: fit-content;
+}
+
+.campaign-dropdown-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.campaign-form-dropdown {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background-color: #f9fafb;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  color: #111827;
+}
+
+.campaign-form-dropdown::placeholder {
+  color: #9ca3af;
+}
+
+.campaign-form-dropdown:focus {
+  outline: none;
+  border-color: #9ca3af;
+  box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.1);
+}
+
+.dropdown-icon {
+  position: absolute;
+  right: 0.75rem;
+  pointer-events: none;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .features-grid,
