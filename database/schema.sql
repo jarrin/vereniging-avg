@@ -7,34 +7,20 @@ USE vereniging_avg;
 -- UUIDs worden opgeslagen als CHAR(36) voor leesbaarheid in deze fase
 -- In een productieomgeving met miljoenen records zou BINARY(16) sneller zijn
 
-CREATE TABLE organizations (
-    id CHAR(36) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    contact_person VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    phone VARCHAR(20),
-    phone_enabled BOOLEAN DEFAULT FALSE,
-    logo_path VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
 CREATE TABLE users (
     id CHAR(36) PRIMARY KEY,
-    organization_id CHAR(36) NOT NULL,
     username VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     last_login TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 CREATE TABLE campaigns (
     id CHAR(36) PRIMARY KEY,
-    organization_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
     name VARCHAR(255) NOT NULL,
     email_subject VARCHAR(255) NOT NULL,
     email_body TEXT NOT NULL,
@@ -47,7 +33,7 @@ CREATE TABLE campaigns (
     auto_delete_at TIMESTAMP NULL,
     status ENUM('draft', 'active', 'paused', 'completed', 'deleted') DEFAULT 'draft',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE questions (
@@ -56,10 +42,7 @@ CREATE TABLE questions (
     question_text VARCHAR(255) NOT NULL,
     sort_order INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE,
-    CONSTRAINT max_five_questions CHECK (
-        (SELECT COUNT(*) FROM questions q WHERE q.campaign_id = campaign_id) <= 5
-    )
+    FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE persons (
@@ -114,7 +97,6 @@ CREATE TABLE reports (
 CREATE TABLE file_uploads (
     id CHAR(36) PRIMARY KEY,
     campaign_id CHAR(36) NOT NULL,
-    organization_id CHAR(36) NOT NULL,
     file_name VARCHAR(255) NOT NULL,
     file_path VARCHAR(255) NOT NULL,
     file_type ENUM('csv', 'xlsx') NOT NULL,
@@ -122,6 +104,5 @@ CREATE TABLE file_uploads (
     uploaded_by CHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE,
-    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
     FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
