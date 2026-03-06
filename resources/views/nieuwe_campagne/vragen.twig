@@ -1,0 +1,102 @@
+{% extends 'layout.twig' %}
+
+{% block content %}
+	<div class="campaign-steps-section">
+		<div class="dashboard-container">
+			<div class="campaign-steps-container">
+				<div class="campaign-steps-wrapper">
+					<div class="campaign-steps-track-wrapper">
+						<div class="campaign-progress-track">
+							<div class="campaign-progress-fill" style="width: 50%"></div>
+						</div>
+						
+						<div class="campaign-steps-circles">
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle">1</div>
+								<p class="campaign-step-label">Verenigingsgegevens</p>
+							</div>
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle active">2</div>
+								<p class="campaign-step-label">Vragen</p>
+							</div>
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle">3</div>
+							<p class="campaign-step-label">E-mail Tekst</p>
+							</div>
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle">4</div>
+								<p class="campaign-step-label">Ledenlijst</p>
+							</div>
+						</div>
+					</div>
+
+					<div class="campaign-form-wrapper">
+						<div class="campaign-form-header">
+							<i data-lucide="help-circle" class="campaign-form-icon"></i>
+							<div class="campaign-form-header-text">
+								<h2 class="campaign-form-title">Vragen</h2>
+								<p class="campaign-form-subtitle">Definieer maximaal 5 ja/nee vragen</p>
+							</div>
+						</div>
+
+						<div class="campaign-form-group">
+							<label for="question-1" class="campaign-form-label">Vraag 1 *</label>
+							<input 
+								type="text" 
+								id="question-1" 
+								name="question_1" 
+								class="campaign-form-input" 
+								placeholder="Bv. Mag ik u op de hoogte houden?"
+								required
+							>
+						</div>
+
+						<div class="campaign-form-group">
+							<label for="question-2" class="campaign-form-label">Vraag 2</label>
+							<input 
+								type="text" 
+								id="question-2" 
+								name="question_2" 
+								class="campaign-form-input" 
+								placeholder="Mag ik u per e-mail bereiken?"
+							>
+						</div>
+
+						<div class="campaign-form-group">
+							<label for="question-3" class="campaign-form-label">Vraag 3</label>
+							<input 
+								type="text" 
+								id="question-3" 
+								name="question_3" 
+								class="campaign-form-input" 
+								placeholder="Mag ik uw gegevens delen met partners?"
+							>
+						</div>
+
+						<div class="campaign-form-group">
+							<label for="question-4" class="campaign-form-label">Vraag 4</label>
+							<input 
+								type="text" 
+								id="question-4" 
+								name="question_4" 
+								class="campaign-form-input" 
+								placeholder="Ik geef toestemming voor marketing"
+							>
+						</div>
+					</div>
+
+					<div class="campaign-form-navigation">
+						<a href="/campagne/form/verenigingsgegevens" class="campaign-btn-nav campaign-btn-nav-prev">
+							<i data-lucide="arrow-left" size="24"></i>
+							<span>Vorige</span>
+						</a>
+						<a href="/campagne/form/email-tekst" class="campaign-btn-nav campaign-btn-nav-next">
+							<span>Volgende</span>
+							<i data-lucide="arrow-right" size="24"></i>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
