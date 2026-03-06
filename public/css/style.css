@@ -27,7 +27,7 @@ body {
   font-family: "Inter", sans-serif;
   color: var(--text-main);
   line-height: 1.6;
-  background-color: var(--white);
+  background-color: #f9fafb;
 }
 
 .container {
