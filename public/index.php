@@ -39,14 +39,6 @@ if ($path === '/' || $path === '/index.php') {
     echo $twig->render('nieuwe_campagne/vragen.twig', [
         'title' => 'Vragen - AVG Consent',
     ]);
-} elseif ($path === '/campagne/form/email-tekst') {
-    echo $twig->render('nieuwe_campagne/stap_3_email.twig', [
-        'title' => 'E-mail Tekst - AVG Consent',
-    ]);
-} elseif ($path === '/campagne/form/ledenlijst') {
-    echo $twig->render('nieuwe_campagne/stap_4_ledenlijst.twig', [
-        'title' => 'Ledenlijst - AVG Consent',
-    ]);
 } else {
     header("HTTP/1.0 404 Not Found");
     echo "404 Not Found";
