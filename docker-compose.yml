@@ -10,7 +10,7 @@ services:
       - "8080:80"
     volumes:
       - .:/var/www/html
-      - ./apache-config:/etc/apache2/sites-available
+      - ./.docker/apache:/etc/apache2/sites-available
     depends_on:
       - db
     networks:
