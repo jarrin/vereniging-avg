@@ -19,6 +19,19 @@ CREATE TABLE organizations (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
+CREATE TABLE users (
+    id CHAR(36) PRIMARY KEY,
+    organization_id CHAR(36) NOT NULL,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    last_login TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE campaigns (
     id CHAR(36) PRIMARY KEY,
     organization_id CHAR(36) NOT NULL,
@@ -27,7 +40,7 @@ CREATE TABLE campaigns (
     email_body TEXT NOT NULL,
     reminder_enabled BOOLEAN DEFAULT FALSE,
     reminder_days INTEGER DEFAULT 7,
-    default_no_after_days INTEGER,
+    non_response_action ENUM('send_reminder', 'default_no', 'no_action') DEFAULT 'no_action',
     start_date DATE,
     end_date DATE,
     report_generated_at TIMESTAMP NULL,
@@ -43,7 +56,10 @@ CREATE TABLE questions (
     question_text VARCHAR(255) NOT NULL,
     sort_order INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+    FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE,
+    CONSTRAINT max_five_questions CHECK (
+        (SELECT COUNT(*) FROM questions q WHERE q.campaign_id = campaign_id) <= 5
+    )
 ) ENGINE=InnoDB;
 
 CREATE TABLE persons (
@@ -88,5 +104,24 @@ CREATE TABLE reports (
     file_path VARCHAR(255) NOT NULL,
     generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     downloaded_at TIMESTAMP NULL,
-    FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+    downloaded_by CHAR(36),
+    sent_via_email BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP NULL,
+    FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE,
+    FOREIGN KEY (downloaded_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE file_uploads (
+    id CHAR(36) PRIMARY KEY,
+    campaign_id CHAR(36) NOT NULL,
+    organization_id CHAR(36) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    file_type ENUM('csv', 'xlsx') NOT NULL,
+    record_count INTEGER NOT NULL,
+    uploaded_by CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+    FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
