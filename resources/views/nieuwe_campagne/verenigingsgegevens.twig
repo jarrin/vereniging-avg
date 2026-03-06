@@ -1,414 +1,121 @@
 {% extends 'layout.twig' %}
 
 {% block content %}
-	<div class="steps-section">
+	<div class="campaign-steps-section">
 		<div class="dashboard-container">
-			<div class="steps-container">
-				<div class="steps-wrapper">
-					<div class="steps-track-wrapper">
-						<div class="progress-track">
-							<div class="progress-fill" style="width: 25%"></div>
+			<div class="campaign-steps-container">
+				<div class="campaign-steps-wrapper">
+					<div class="campaign-steps-track-wrapper">
+						<div class="campaign-progress-track">
+							<div class="campaign-progress-fill" style="width: 25%"></div>
 						</div>
 						
-						<div class="steps-circles">
-							<div class="step-item">
-								<div class="step-circle active">1</div>
-								<p class="step-label">Verenigingsgegevens</p>
+						<div class="campaign-steps-circles">
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle active">1</div>
+								<p class="campaign-step-label">Verenigingsgegevens</p>
 							</div>
-							<div class="step-item">
-								<div class="step-circle">2</div>
-								<p class="step-label">Vragen</p>
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle">2</div>
+								<p class="campaign-step-label">Vragen</p>
 							</div>
-							<div class="step-item">
-								<div class="step-circle">3</div>
-								<p class="step-label">E-mail Teks</p>
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle">3</div>
+								<p class="campaign-step-label">E-mail Teks</p>
 							</div>
-							<div class="step-item">
-								<div class="step-circle">4</div>
-								<p class="step-label">Ledenlijst</p>
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle">4</div>
+								<p class="campaign-step-label">Ledenlijst</p>
 							</div>
 						</div>
 					</div>
 
-					<div class="form-wrapper">
-						<div class="form-header">
-							<i data-lucide="building-2" class="form-icon"></i>
-							<div class="form-header-text">
-								<h2 class="form-title">Verenigingsgegevens</h2>
-								<p class="form-subtitle">Basisinformatie voor uw vereniging</p>
+					<div class="campaign-form-wrapper">
+						<div class="campaign-form-header">
+							<i data-lucide="building-2" class="campaign-form-icon"></i>
+							<div class="campaign-form-header-text">
+								<h2 class="campaign-form-title">Verenigingsgegevens</h2>
+								<p class="campaign-form-subtitle">Basisinformatie voor uw vereniging</p>
 							</div>
 						</div>
 
-						<div class="form-group">
-							<label for="org-name" class="form-label">Naam van de vereniging *</label>
+						<div class="campaign-form-group">
+							<label for="org-name" class="campaign-form-label">Naam van de vereniging *</label>
 							<input 
 								type="text" 
 								id="org-name" 
 								name="org_name" 
-								class="form-input" 
+								class="campaign-form-input" 
 								placeholder="Sport vereniging De Eendracht"
 								required
 							>
 						</div>
 
-						<div class="form-group">
-							<label for="contact-person" class="form-label">Contactpersoon *</label>
+						<div class="campaign-form-group">
+							<label for="contact-person" class="campaign-form-label">Contactpersoon *</label>
 							<input 
 								type="text" 
 								id="contact-person" 
 								name="contact_person" 
-								class="form-input" 
+								class="campaign-form-input" 
 								placeholder="Van de Vries"
 								required
 							>
 						</div>
 
-						<div class="form-group">
-							<label for="email" class="form-label">E-mailadres *</label>
+						<div class="campaign-form-group">
+							<label for="email" class="campaign-form-label">E-mailadres *</label>
 							<input 
 								type="email" 
 								id="email" 
 								name="email" 
-								class="form-input" 
+								class="campaign-form-input" 
 								placeholder="secretaris@vereniging.nl"
 								required
 							>
 						</div>
 
-						<div class="form-group">
-							<label for="phone" class="form-label">Telefoonnummer</label>
+						<div class="campaign-form-group">
+							<label for="phone" class="campaign-form-label">Telefoonnummer</label>
 							<input 
 								type="tel" 
 								id="phone" 
 								name="phone" 
-								class="form-input" 
+								class="campaign-form-input" 
 								placeholder="06-12345678"
 							>
 						</div>
 
-						<div class="form-group-toggle">
-							<label class="toggle-switch">
-								<input type="checkbox" class="toggle-input">
-								<span class="toggle-slider"></span>
+						<div class="campaign-form-group-toggle">
+							<label class="campaign-toggle-switch">
+								<input type="checkbox" class="campaign-toggle-input">
+								<span class="campaign-toggle-slider"></span>
 							</label>
-							<span class="toggle-label">Telefoonnummer tonen in e-mails</span>
+							<span class="campaign-toggle-label">Telefoonnummer tonen in e-mails</span>
 						</div>
 
-						<div class="form-group">
-							<label class="form-label">Logo (.jpg max 2MB, bij voorkeur 200x200px)</label>
-							<label class="upload-button">
+						<div class="campaign-form-group">
+							<label class="campaign-form-label">Logo (.jpg max 2MB, bij voorkeur 200x200px)</label>
+							<label class="campaign-upload-button">
 								<input type="file" accept=".jpg,.jpeg" style="display: none;">
-								<i data-lucide="upload" size="16"></i>
+								<i data-lucide="upload" size="20"></i>
 								<span>Upload Logo</span>
 							</label>
 						</div>
 					</div>
 
-					<div class="form-navigation">
-						<button class="btn-nav btn-nav-prev">
-							<i data-lucide="arrow-left" size="20"></i>
+					<div class="campaign-form-navigation">
+						<button class="campaign-btn-nav campaign-btn-nav-prev">
+							<i data-lucide="arrow-left" size="24"></i>
 							<span>Vorige</span>
 						</button>
-						<button class="btn-nav btn-nav-next">
+						<button class="campaign-btn-nav campaign-btn-nav-next">
 							<span>Volgende</span>
-							<i data-lucide="arrow-right" size="20"></i>
+							<i data-lucide="arrow-right" size="24"></i>
 						</button>
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-
-	<style>
-		.steps-section {
-			padding: 1rem 1rem;			background-color: #f9fafb;		}
-
-		.steps-container {
-			display: flex;
-			justify-content: center;
-		}
-
-		.steps-wrapper {
-			width: 100%;
-			max-width: 750px;
-			display: flex;
-			flex-direction: column;
-		}
-
-		.steps-track-wrapper {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			margin-bottom: 2rem;
-		}
-
-		.progress-track {
-			width: calc(100% + 4rem);
-			height: 8px;
-			background-color: #e5e7eb;
-			border-radius: 4px;
-			overflow: hidden;
-			order: 2;
-			margin-left: -2rem;
-			margin-right: -2rem;
-		}
-
-		.progress-fill {
-			height: 100%;
-			background-color: #1e8a87;
-			border-radius: 4px;
-			width: 25%;
-		}
-
-		.steps-circles {
-			display: flex;
-			justify-content: space-between;
-			width: 100%;
-			order: 1;
-			margin-bottom: 1rem;
-		}
-
-		.step-item {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			gap: 0.75rem;
-		}
-
-		.step-circle {
-			width: 50px;
-			height: 50px;
-			border-radius: 50%;
-			background-color: #d1d5db;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			font-size: 1.25rem;
-			font-weight: 600;
-			color: #374151;
-			flex-shrink: 0;
-		}
-
-		.step-circle.active {
-			background-color: #1e8a87;
-			color: white;
-		}
-
-		.step-label {
-			font-size: 0.9rem;
-			color: #6b7280;
-			font-weight: 500;
-			text-align: center;
-			margin: 0;
-			max-width: 120px;
-			white-space: nowrap;
-		}
-
-		.form-section {
-			padding: 2rem 1rem;
-		}
-
-		.form-wrapper {
-			width: calc(100% + 4rem);
-			margin-left: -2rem;
-			margin-right: -2rem;
-			margin-top: 2rem;
-			background: white;
-			border: 1px solid #e5e7eb;
-			border-radius: 8px;
-            padding-bottom: 15px;
-		}
-
-		.form-header {
-			display: flex;
-			align-items: center;
-			gap: 10px;
-			padding: 2rem 2rem 0 2rem;
-		}
-
-		.form-icon {
-			color: #1e8a87;
-			flex-shrink: 0;
-		}
-
-		.form-header-text {
-			display: flex;
-			flex-direction: column;
-		}
-
-		.form-title {
-			font-size: 1.25rem;
-			font-weight: 700;
-			color: #111827;
-			margin: 0;
-		}
-
-		.form-subtitle {
-			font-size: 0.95rem;
-			color: #6b7280;
-			margin: 0;
-		}
-
-		.form-group {
-			display: flex;
-			flex-direction: column;
-			gap: 0.5rem;
-			margin-top: 1.5rem;
-			padding: 0 2rem;
-		}
-
-		.form-label {
-			font-size: 0.95rem;
-			font-weight: 500;
-			color: #111827;
-		}
-
-		.form-input {
-			padding: 0.75rem;
-			border: 1px solid #d1d5db;
-			border-radius: 6px;
-			font-size: 0.95rem;
-			font-family: inherit;
-			background-color: #f9fafb;
-		}
-
-		.form-input::placeholder {
-			color: #9ca3af;
-		}
-
-		.form-input:focus {
-			outline: none;
-			border-color: #9ca3af;
-			box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.1);
-		}
-
-		.form-group-toggle {
-			display: flex;
-			align-items: center;
-			gap: 0.75rem;
-			margin-top: 1.5rem;
-			padding: 0 2rem;
-		}
-
-		.toggle-switch {
-			position: relative;
-			display: inline-block;
-			width: 57px;
-			height: 30px;
-			cursor: pointer;
-		}
-
-		.toggle-input {
-			display: none;
-		}
-
-		.toggle-slider {
-			position: absolute;
-			top: 0;
-			left: 0;
-			right: 0;
-			bottom: 0;
-			background-color: #d1d5db;
-			border-radius: 34px;
-			transition: 0.3s;
-		}
-
-		.toggle-slider::before {
-			content: '';
-			position: absolute;
-			height: 26px;
-			width: 26px;
-			left: 2px;
-			bottom: 2px;
-			background-color: white;
-			border-radius: 50%;
-			transition: 0.3s;
-		}
-
-		.toggle-input:checked + .toggle-slider {
-			background-color: #10b981;
-		}
-
-		.toggle-input:checked + .toggle-slider::before {
-			transform: translateX(27px);
-		}
-
-		.toggle-label {
-			font-size: 0.95rem;
-			color: #111827;
-			font-weight: 500;
-		}
-
-		.upload-button {
-			display: inline-flex;
-			align-items: center;
-			gap: 0.625rem;
-			width: 25%;
-			padding: 0.75rem;
-			background-color: #f3f4f6;
-			border: 1px solid #d1d5db;
-			border-radius: 6px;
-			cursor: pointer;
-			font-size: 0.95rem;
-			color: #111827;
-			font-weight: 500;
-			transition: 0.2s;
-			margin-top: 0.5rem;
-			white-space: nowrap;
-		}
-
-		.upload-button:hover {
-			background-color: #e5e7eb;
-		}
-
-		.upload-button i {
-			color: #6b7280;
-		}
-
-		.form-navigation {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			width: calc(100% + 4rem);
-			margin-left: -2rem;
-			margin-right: -2rem;
-			margin-top: 1.5rem;
-            margin-bottom: 2rem;
-			gap: 1rem;
-		}
-
-		.btn-nav {
-			display: inline-flex;
-			align-items: center;
-			gap: 0.5rem;
-			padding: 10px 20px;
-			border-radius: 8px;
-			font-weight: 600;
-			border: none;
-			cursor: pointer;
-			font-size: 0.95rem;
-			transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-			text-decoration: none;
-		}
-
-		.btn-nav-prev {
-			background-color: #f9fafb;
-			color: rgba(209, 213, 219, 0.8);
-			border: 1px solid #d1d5db;
-		}
-
-		.btn-nav-prev:hover {
-			background-color: #e5e7eb;
-		}
-
-		.btn-nav-next {
-			background-color: rgba(30, 138, 135, 0.3);
-			color: white;
-			border: 1px solid rgba(30, 138, 135, 0.3);
-		}
-
-		.btn-nav-next:hover {
-			background-color: rgba(30, 138, 135, 0.4);
-		}
-	</style>
 {% endblock %}
