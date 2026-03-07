@@ -1,0 +1,168 @@
+{% extends 'layout.twig' %}
+
+{% block content %}
+	<div class="campaign-steps-section">
+		<div class="dashboard-container">
+			<div class="campaign-steps-container">
+				<div class="campaign-steps-wrapper">
+					<div class="campaign-steps-track-wrapper">
+						<div class="campaign-progress-track">
+							<div class="campaign-progress-fill" style="width: 75%"></div>
+						</div>
+						
+						<div class="campaign-steps-circles">
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle active">
+									<i data-lucide="check-circle" size="24"></i>
+								</div>
+								<p class="campaign-step-label">Verenigingsgegevens</p>
+							</div>
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle active">
+									<i data-lucide="check-circle" size="24"></i>
+								</div>
+								<p class="campaign-step-label">Vragen</p>
+							</div>
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle active">3</div>
+								<p class="campaign-step-label">E-mail Tekst</p>
+							</div>
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle">4</div>
+								<p class="campaign-step-label">Ledenlijst</p>
+							</div>
+						</div>
+					</div>
+
+					<div class="campaign-form-wrapper">
+						<div class="campaign-form-header">
+							<i data-lucide="mail" class="campaign-form-icon"></i>
+							<div class="campaign-form-header-text">
+								<h2 class="campaign-form-title">E-mail Tekst</h2>
+								<p class="campaign-form-subtitle">Stel uw e-mail tekst samen</p>
+							</div>
+						</div>
+
+						<div class="campaign-form-group">
+							<div class="campaign-available-variables">
+								<span class="variables-label-inline">Beschikbare variabelen</span>
+								<div class="variables-list">
+									<span class="variable-tag">{naam}</span>
+									<span class="variable-tag">{verenigingsnaam}</span>
+									<span class="variable-tag">{contactpersoon}</span>
+									<span class="variable-tag">{link}</span>
+									<span class="variable-tag">{einddatum}</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="campaign-form-group">
+							<label for="email-template" class="campaign-form-label">Voorbeeld e-mail laden</label>
+							<div class="campaign-dropdown-wrapper">
+								<select id="email-template" name="email_template" class="campaign-form-dropdown">
+									<option value="">Kies een voorbeeld...</option>
+									<option value="template1">voorbeeld 1</option>
+									<option value="template2">voorbeeld 2</option>
+									<option value="template3">voorbeeld 3</option>
+									<option value="template4">voorbeeld 4</option>
+								</select>
+								<i data-lucide="chevron-down" class="dropdown-icon"></i>
+							</div>
+						</div>
+
+						<div class="campaign-form-group">
+							<label for="email-subject" class="campaign-form-label">Onderwerp eerste e-mail *</label>
+							<input 
+								type="text" 
+								id="email-subject" 
+								name="email_subject" 
+								class="campaign-form-input" 
+								placeholder="Uw jaarlijkse toestemming - {verenigingsnaam}"
+								required
+							>
+						</div>
+
+						<div class="campaign-form-group">
+							<label for="email-body" class="campaign-form-label">Tekst eerste e-mail *</label>
+							<textarea 
+								id="email-body" 
+								name="email_body" 
+								class="campaign-form-input" 
+								placeholder="Beste {naam},
+
+Zoals ieder jaar vragen wij u om uw toestemming te bevestigen voor het gebruik van uw gegevens door {verenigingsnaam}.
+
+Klick op de onderstaande link om de vragen te beantworden. Dit duurt slechts een minuut.
+
+{link}"
+								rows="8"
+								required
+							></textarea>
+						</div>
+
+						<div class="campaign-form-group">
+							<label for="action-no-response" class="campaign-form-label">Actie bij geen reactie</label>
+							<div class="campaign-dropdown-wrapper">
+								<select id="action-no-response" name="action_no_response" class="campaign-form-dropdown">
+									<option value="">Kies een actie...</option>
+								<option value="reminder">Herinnering sturen</option>
+									<option value="no-action">Geen actie</option>
+								</select>
+								<i data-lucide="chevron-down" class="dropdown-icon"></i>
+							</div>
+						</div>
+
+						<div class="campaign-form-group">
+							<label for="reminder-subject" class="campaign-form-label">Onderwerp herinnering</label>
+							<input 
+								type="text" 
+								id="reminder-subject" 
+								name="reminder_subject" 
+								class="campaign-form-input" 
+								placeholder="Herinnering: Toestemming bevestigen - {verenigingsnaam}"
+							>
+						</div>
+
+						<div class="campaign-form-group">
+							<label for="email-signature" class="campaign-form-label">Tekst herinnering</label>
+							<textarea 
+								id="email-signature" 
+								name="email_signature" 
+								class="campaign-form-input" 
+								placeholder="Beste {naam},
+
+U heeft nog niet gereageerd op ons verzoek om toestemming. Wij willen u vriendelijk herinneren om de vragen te beantwoorden.
+
+{link}"
+								rows="7"
+							></textarea>
+						</div>
+
+						<div class="campaign-form-group">
+							<label for="reminder-days" class="campaign-form-label">Herinnering na (dagen)</label>
+							<input 
+								type="number" 
+								id="reminder-days" 
+								name="reminder_days" 
+								class="campaign-form-input" 
+								placeholder="7"
+								value="7"
+							>
+						</div>
+					</div>
+
+					<div class="campaign-form-navigation">
+						<a href="/campagne/form/vragen" class="campaign-btn-nav campaign-btn-nav-prev">
+							<i data-lucide="arrow-left" size="24"></i>
+							<span>Vorige</span>
+						</a>
+						<a href="/campagne/form/ledenlijst" class="campaign-btn-nav campaign-btn-nav-next">
+							<span>Volgende</span>
+							<i data-lucide="arrow-right" size="24"></i>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}

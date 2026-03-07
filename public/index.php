@@ -57,6 +57,14 @@ if ($path === '/' || $path === '/index.php') {
     echo $twig->render('nieuwe_campagne/vragen.twig', [
         'title' => 'Vragen - AVG Consent',
     ]);
+} elseif ($path === '/campagne/form/email-tekst') {
+    echo $twig->render('nieuwe_campagne/email-tekst.twig', [
+        'title' => 'E-mail Tekst - AVG Consent',
+    ]);
+} elseif ($path === '/campagne/form/ledenlijst') {
+    echo $twig->render('nieuwe_campagne/ledenlijst.twig', [
+        'title' => 'Ledenlijst - AVG Consent',
+    ]);
 } else {
     // Protected pages - require login
     if (!$isLoggedIn) {
