@@ -1,0 +1,307 @@
+{% extends 'layout.twig' %}
+
+{% block content %}
+	<div class="campaign-steps-section">
+		<div class="dashboard-container">
+			<div class="campaign-steps-container">
+				<div class="campaign-steps-wrapper">
+					<div class="campaign-steps-track-wrapper">
+						<div class="campaign-progress-track">
+							<div class="campaign-progress-fill" style="width: 100%"></div>
+						</div>
+						
+						<div class="campaign-steps-circles">
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle active">
+									<i data-lucide="check-circle" size="24"></i>
+								</div>
+								<p class="campaign-step-label">Verenigingsgegevens</p>
+							</div>
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle active">
+									<i data-lucide="check-circle" size="24"></i>
+								</div>
+								<p class="campaign-step-label">Vragen</p>
+							</div>
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle active">
+									<i data-lucide="check-circle" size="24"></i>
+								</div>
+								<p class="campaign-step-label">E-mail Tekst</p>
+							</div>
+							<div class="campaign-step-item">
+								<div class="campaign-step-circle active">4</div>
+								<p class="campaign-step-label">Ledenlijst</p>
+							</div>
+						</div>
+					</div>
+
+					<div class="campaign-form-wrapper">
+						<div class="campaign-form-header">
+							<i data-lucide="users" class="campaign-form-icon"></i>
+							<div class="campaign-form-header-text">
+								<h2 class="campaign-form-title">Ledenlijst</h2>
+								<p class="campaign-form-subtitle">Upload uw ledenbestand</p>
+							</div>
+						</div>
+
+						<div class="campaign-form-group">
+							<div class="campaign-available-variables">
+								<span class="variables-label-inline">Bestandsformaat</span>
+								<p class="file-format-description">Upload een Excel (.xlsx) of CSV bestand met twee kolommen: <strong>Naam</strong> en <strong>E-mail</strong>.</p>
+								<table class="file-format-table">
+									<thead>
+										<tr>
+											<th>Naam</th>
+											<th>Email</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<td>Jan de Vries</td>
+											<td>jan@voorbeeld.nl</td>
+										</tr>
+										<tr>
+											<td>Marie Jansen</td>
+											<td>marie@voorbeeld.nl</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+
+						<div class="campaign-form-group">
+							<label for="member-list" class="campaign-form-label">Ledenbestand *</label>
+							<label for="member-list" class="campaign-upload-area">
+								<input type="file" id="member-list" name="member_list" accept=".csv,.xlsx,.xls" style="display: none;">
+								<i data-lucide="upload" size="40"></i>
+								<span class="upload-text">Klick om een Excel of CSV bestand te uploaden</span>
+							</label>
+						</div>
+
+						<div class="campaign-form-group">
+							<label for="end-date" class="campaign-form-label">Einddatum Campagne *</label>
+							<input 
+								type="date" 
+								id="end-date" 
+								name="end_date" 
+								class="campaign-form-date"
+								required
+							>
+						</div>
+					</div>
+
+					<div class="campaign-form-navigation">
+						<a href="/campagne/form/email-tekst" class="campaign-btn-nav campaign-btn-nav-prev">
+							<i data-lucide="arrow-left" size="24"></i>
+							<span>Vorige</span>
+						</a>
+						<a href="#" class="campaign-btn-nav campaign-btn-nav-next campaign-btn-nav-next-foggy">
+							<span>Campagne Aanmaken</span>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			const dateInput = document.getElementById('end-date');
+			const datePickerBtn = document.getElementById('date-picker-btn');
+			const calendarPopup = document.getElementById('calendar-popup');
+			const calendarMonth = document.getElementById('calendar-month');
+			const calendarYear = document.getElementById('calendar-year');
+			const calendarDaysContainer = document.getElementById('calendar-days-container');
+
+			if (!dateInput) return;
+
+			const template = 'dd-mm-jjjj';
+			const mask = ['d', 'd', '-', 'm', 'm', '-', 'j', 'j', 'j', 'j'];
+			const positions = { digits: [0, 1, 3, 4, 6, 7, 8, 9] };
+
+			let currentMonth = new Date().getMonth();
+			let currentYear = new Date().getFullYear();
+
+			// Initialize month and year selects
+			function initSelects() {
+				const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+				months.forEach((month, index) => {
+					const option = document.createElement('option');
+					option.value = index;
+					option.textContent = month;
+					option.selected = index === currentMonth;
+					calendarMonth.appendChild(option);
+				});
+
+				for (let year = 1900; year <= 2100; year++) {
+					const option = document.createElement('option');
+					option.value = year;
+					option.textContent = year;
+					option.selected = year === currentYear;
+					calendarYear.appendChild(option);
+				}
+			}
+
+			// Render calendar days
+			function renderCalendar() {
+				calendarDaysContainer.innerHTML = '';
+				const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+				const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+				const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+				// Previous month days
+				for (let i = (firstDay === 0 ? 6 : firstDay - 1); i > 0; i--) {
+					const dayEl = document.createElement('div');
+					dayEl.className = 'calendar-day other-month';
+					dayEl.textContent = daysInPrevMonth - i + 1;
+					calendarDaysContainer.appendChild(dayEl);
+				}
+
+				// Current month days
+				for (let day = 1; day <= daysInMonth; day++) {
+					const dayEl = document.createElement('div');
+					dayEl.className = 'calendar-day';
+					dayEl.textContent = day;
+
+					const today = new Date();
+					if (day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+						dayEl.classList.add('today');
+					}
+
+					dayEl.addEventListener('click', () => selectDate(day));
+					calendarDaysContainer.appendChild(dayEl);
+				}
+
+				// Next month days
+				const totalCells = calendarDaysContainer.children.length;
+				for (let day = 1; totalCells + day <= 42; day++) {
+					const dayEl = document.createElement('div');
+					dayEl.className = 'calendar-day other-month';
+					dayEl.textContent = day;
+					calendarDaysContainer.appendChild(dayEl);
+				}
+			}
+
+			function selectDate(day) {
+				const date = String(day).padStart(2, '0');
+				const month = String(currentMonth + 1).padStart(2, '0');
+				const year = currentYear;
+				dateInput.value = `${date}-${month}-${year}`;
+				calendarPopup.classList.remove('active');
+			}
+
+			// Event listeners
+			datePickerBtn.addEventListener('click', () => {
+				calendarPopup.classList.toggle('active');
+				if (calendarPopup.classList.contains('active')) {
+					currentMonth = new Date().getMonth();
+					currentYear = new Date().getFullYear();
+					calendarMonth.value = currentMonth;
+					calendarYear.value = currentYear;
+					renderCalendar();
+				}
+			});
+
+			calendarMonth.addEventListener('change', (e) => {
+				currentMonth = parseInt(e.target.value);
+				renderCalendar();
+			});
+
+			calendarYear.addEventListener('change', (e) => {
+				currentYear = parseInt(e.target.value);
+				renderCalendar();
+			});
+
+			// Date mask functionality
+			function getValueArray() {
+				return (dateInput.value || template).split('');
+			}
+
+			function setValueFromArray(arr) {
+				dateInput.value = arr.join('');
+			}
+
+			dateInput.addEventListener('keydown', function(e) {
+				const key = e.key;
+				const cursorPos = this.selectionStart;
+				const valueArr = getValueArray();
+
+				// Handle Backspace
+				if (key === 'Backspace') {
+					e.preventDefault();
+					if (cursorPos > 0) {
+						let pos = cursorPos - 1;
+						while (pos >= 0 && !positions.digits.includes(pos)) {
+							pos--;
+						}
+						if (pos >= 0 && positions.digits.includes(pos)) {
+							valueArr[pos] = mask[pos];
+							setValueFromArray(valueArr);
+							this.setSelectionRange(pos, pos);
+						}
+					}
+					return;
+				}
+
+				// Handle Delete
+				if (key === 'Delete') {
+					e.preventDefault();
+					if (cursorPos < template.length) {
+						let pos = cursorPos;
+						while (pos < template.length && !positions.digits.includes(pos)) {
+							pos++;
+						}
+						if (pos < template.length && positions.digits.includes(pos)) {
+							valueArr[pos] = mask[pos];
+							setValueFromArray(valueArr);
+							this.setSelectionRange(cursorPos, cursorPos);
+						}
+					}
+					return;
+				}
+
+				// Allow navigation and special keys
+				if (['ArrowLeft', 'ArrowRight', 'Tab', 'Shift', 'Control', 'Alt'].includes(key)) {
+					return;
+				}
+
+				// Only allow numbers
+				if (!/^\d$/.test(key)) {
+					e.preventDefault();
+					return;
+				}
+
+				e.preventDefault();
+
+				// Find next digit position from cursor
+				let targetPos = cursorPos;
+				while (targetPos < mask.length && !positions.digits.includes(targetPos)) {
+					targetPos++;
+				}
+
+				if (targetPos < mask.length) {
+					valueArr[targetPos] = key;
+					setValueFromArray(valueArr);
+					
+					let nextPos = targetPos + 1;
+					while (nextPos < mask.length && !positions.digits.includes(nextPos)) {
+						nextPos++;
+					}
+					this.setSelectionRange(nextPos, nextPos);
+				}
+			});
+
+			dateInput.addEventListener('focus', function() {
+				if (this.value === template || !this.value) {
+					this.value = template;
+					this.setSelectionRange(0, 0);
+				}
+			});
+		});
+	</script>
+
+	<script>
+		lucide.createIcons();
+	</script>
+{% endblock %}
