@@ -11,42 +11,33 @@
 		<script src="https://unpkg.com/lucide@latest"></script>
 	</head>
 	<body>
-		<header class="navbar">
-			<div class="container">
-				<div class="logo">
-					<i data-lucide="shield-check"></i>
-					<span>AVG Consent</span>
-				</div>
-				<nav>
-					<a href="#kenmerken">Kenmerken</a>
-					<a href="#hoe-het-werkt">Hoe het werkt</a>
-					<a href="/dashboard" class="btn btn-primary">Dashboard</a>
-				</nav>
-			</div>
-		</header>
+		{% include 'includes/navbar.twig' %}
 
 		<main>
 			{% block content %}{% endblock %}
 		</main>
 
-		<footer class="footer">
-			<div class="container">
-				<div class="footer-content">
-					<div class="footer-logo">
-						<i data-lucide="shield-check"></i>
-						<span>AVG Consent</span>
-					</div>
-					<div class="footer-copy">
-						&copy;
-						{{ "now"|date("Y") }}
-						AVG Consent Platform. Privacy-first toestemmingsbeheer.
-					</div>
-				</div>
-			</div>
-		</footer>
+		{% include 'includes/footer.twig' %}
 
 		<script>
 			lucide.createIcons();
+
+// Mobile menu toggle logic
+const menuToggle = document.querySelector('.menu-toggle');
+const navLinks = document.querySelector('.nav-links');
+
+if (menuToggle && navLinks) {
+menuToggle.addEventListener('click', () => {
+navLinks.classList.toggle('active');
+const icon = menuToggle.querySelector('i');
+if (navLinks.classList.contains('active')) {
+icon.setAttribute('data-lucide', 'x');
+} else {
+icon.setAttribute('data-lucide', 'menu');
+}
+lucide.createIcons();
+});
+}
 		</script>
 	</body>
 </html>
