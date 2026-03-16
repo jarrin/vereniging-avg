@@ -111,6 +111,11 @@ if ($path === '/' || $path === '/index.php') {
         'title' => 'AVG Consent - Toestemmingsbeheer vereenvoudigd',
     ]);
 } elseif ($path === '/dashboard') {
+    // Protected page - require login
+    if (!$isLoggedIn) {
+        header('Location: /index.php?action=login');
+        exit;
+    }
     echo $twig->render('dashboard.twig', [
         'title' => 'Dashboard - AVG Consent',
     ]);
