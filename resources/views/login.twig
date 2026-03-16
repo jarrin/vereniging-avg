@@ -1,0 +1,67 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+<div class="center-container">
+    <div class="auth-form login-form">
+        <h2>Inloggen</h2>
+        <p>Log in met uw organisatieaccount</p>
+        
+        {% if message %}
+            <div class="message {% if messageType == 'success' %}success{% else %}error{% endif %}">
+                {{ message }}
+            </div>
+        {% endif %}
+        
+        {% if errors and errors|length > 0 %}
+            <ul class="errors">
+                {% for field, error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="post" action="" novalidate>
+            <div class="form-group">
+                <label for="username">Gebruikersnaam of E-mail</label>
+                <input 
+                    id="username" 
+                    name="username" 
+                    type="text" 
+                    required 
+                    maxlength="255"
+                    value="{{ post.username|default('') }}"
+                    placeholder="Voer uw gebruikersnaam of e-mail in"
+                />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Wachtwoord</label>
+                <input 
+                    id="password" 
+                    name="password" 
+                    type="password" 
+                    required
+                    placeholder="Voer uw wachtwoord in"
+                />
+            </div>
+
+            <div class="form-group remember-me">
+                <input 
+                    type="checkbox" 
+                    id="remember" 
+                    name="remember"
+                />
+                <label for="remember">Herinner mij voor 30 dagen</label>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Inloggen</button>
+            </div>
+        </form>
+
+        <div class="auth-footer">
+            <p>Geen account? <a href="/index.php?action=register">Registreer hier</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
