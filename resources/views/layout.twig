@@ -11,6 +11,12 @@
 		<script src="https://unpkg.com/lucide@latest"></script>
 	</head>
 	<body class="{% block bodyClass %}{% endblock %}">
+		<!-- Loading Overlay -->
+		<div id="loading-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f9fafb; z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s;">
+			<div class="loader-spinner" style="width: 50px; height: 50px; border: 4px solid rgba(20, 184, 166, 0.1); border-top-color: #14b8a6; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+		</div>
+		<style> @keyframes spin { 100% { transform: rotate(360deg); } } </style>
+
 		{% block navbar %}
 			{% include 'includes/navbar.twig' %}
 		{% endblock %}
@@ -23,6 +29,8 @@
 			{% include 'includes/footer.twig' %}
 		{% endblock %}
 
+		<!-- GSAP -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 		<script>
 			lucide.createIcons();
 
@@ -41,6 +49,51 @@
 					lucide.createIcons();
 				});
 			}
+
+			// GSAP Animations
+			document.addEventListener("DOMContentLoaded", () => {
+				const tl = gsap.timeline();
+				
+				// 1. Fade out preloader
+				tl.to("#loading-overlay", {
+					opacity: 0,
+					duration: 0.5,
+					ease: "power2.out",
+					onComplete: () => {
+						const overlay = document.getElementById("loading-overlay");
+						if (overlay) overlay.remove();
+					}
+				});
+
+				// 2. Animate Navbar
+				tl.from(".navbar", {
+					y: -50,
+					opacity: 0,
+					duration: 0.6,
+					ease: "power2.out"
+				}, "-=0.2");
+
+				// 3. Animate Main Content Items (Direct children of <main>)
+				// Dit voorkomt dat geneste animaties op <main> en children elkaar in de weg zitten
+				const mainItems = document.querySelectorAll('main > *');
+				if (mainItems.length > 0) {
+					tl.from(mainItems, {
+						y: 30,
+						opacity: 0,
+						duration: 0.7,
+						stagger: 0.2,
+						ease: "power2.out"
+					}, "-=0.3");
+				}
+
+				// 4. Animate Footer
+				tl.from(".footer", {
+					opacity: 0,
+					y: 20,
+					duration: 0.6,
+					ease: "power2.out"
+				}, "-=0.2");
+			});
 		</script>
 
 		{% block scripts %}{% endblock %}
