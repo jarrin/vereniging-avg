@@ -1,0 +1,183 @@
+{% extends 'layout.twig' %}
+
+{% block bodyClass %}page-dashboard{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+
+<!-- Mobile topbar (only visible on small screens) -->
+<div class="mobile-topbar">
+    <div class="mobile-topbar-brand">
+        <i data-lucide="shield-check"></i>
+        <span>AVG Verenigingen</span>
+    </div>
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu openen">
+        <i data-lucide="menu"></i>
+    </button>
+</div>
+
+<!-- Sidebar overlay backdrop -->
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+<div class="app-shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <i data-lucide="shield-check"></i>
+            <span>AVG Verenigingen</span>
+            <!-- Close button, only visible on mobile -->
+            <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Menu sluiten">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="sidebar-link">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/campagne/nieuw" class="sidebar-link">
+                <i data-lucide="plus-circle"></i>
+                <span>Nieuwe campagne</span>
+            </a>
+            <a href="#" class="sidebar-link">
+                <i data-lucide="bar-chart-2"></i>
+                <span>Rapportages</span>
+            </a>
+            <a href="/instellingen" class="sidebar-link active">
+                <i data-lucide="settings"></i>
+                <span>Instellingen</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-avatar">
+                    <i data-lucide="user"></i>
+                </div>
+                <div class="sidebar-user-info">
+                    <p class="sidebar-user-name">Secretaris</p>
+                    <p class="sidebar-user-email">{{ user.email|default('vereniging@avg.nl') }}</p>
+                </div>
+            </div>
+            <a href="/logout" class="sidebar-logout" title="Uitloggen">
+                <i data-lucide="log-out"></i>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main content -->
+    <div class="main-content">
+
+        <!-- Top bar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1 class="topbar-title">Instellingen</h1>
+                <p class="topbar-subtitle">Pas uw account en beveiliging aan</p>
+            </div>
+        </div>
+
+        <!-- Settings container -->
+        <div class="settings-container">
+            
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h2 class="settings-title">Profielgegevens</h2>
+                    <p class="settings-desc">Pas uw e-mailadres of weergegeven naam aan.</p>
+                </div>
+                <div class="settings-card">
+                    <form method="post" action="#" class="settings-form">
+                        <div class="form-group row">
+                            <div class="col-half">
+                                <label for="username">Gebruikersnaam</label>
+                                <input type="text" id="username" name="username" class="campaign-form-input" value="{{ user.username|default('secretaris') }}" readonly>
+                                <small class="form-hint">Gebruikersnaam kan niet gewijzigd worden.</small>
+                            </div>
+                            <div class="col-half">
+                                <label for="email">E-mailadres</label>
+                                <input type="email" id="email" name="email" class="campaign-form-input" value="{{ user.email|default('secretaris@vereniging.nl') }}">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Opslaan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h2 class="settings-title">Wachtwoord veranderen</h2>
+                    <p class="settings-desc">Kies een sterk wachtwoord om uw account veilig te houden.</p>
+                </div>
+                <div class="settings-card">
+                    <form method="post" action="#" class="settings-form">
+                        <div class="form-group mb-4">
+                            <label for="current_password">Huidig wachtwoord</label>
+                            <input type="password" id="current_password" name="current_password" class="campaign-form-input" placeholder="••••••••">
+                        </div>
+                        <div class="form-group row mb-4">
+                            <div class="col-half">
+                                <label for="new_password">Nieuw wachtwoord</label>
+                                <input type="password" id="new_password" name="new_password" class="campaign-form-input" placeholder="••••••••">
+                            </div>
+                            <div class="col-half">
+                                <label for="confirm_password">Bevestig nieuw wachtwoord</label>
+                                <input type="password" id="confirm_password" name="confirm_password" class="campaign-form-input" placeholder="••••••••">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Wachtwoord wijzigen</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="settings-section danger-zone">
+                <div class="settings-header">
+                    <h2 class="settings-title delete-title">Gevarenzone</h2>
+                    <p class="settings-desc">Permanente acties voor uw account.</p>
+                </div>
+                <div class="settings-card border-danger">
+                    <div class="danger-flex">
+                        <div class="danger-text">
+                            <h3>Account verwijderen</h3>
+                            <p>Zodra u uw account verwijdert, is er geen weg meer terug. Wees alsjeblieft heel zeker.</p>
+                        </div>
+                        <button class="btn icon-btn-danger btn-delete">Verwijder account</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    const sidebar         = document.getElementById('sidebar');
+    const backdrop        = document.getElementById('sidebarBackdrop');
+    const openBtn         = document.getElementById('mobileMenuBtn');
+    const closeBtn        = document.getElementById('sidebarCloseBtn');
+
+    function openSidebar() {
+        sidebar.classList.add('sidebar-open');
+        backdrop.classList.add('backdrop-visible');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('sidebar-open');
+        backdrop.classList.remove('backdrop-visible');
+        document.body.style.overflow = '';
+    }
+
+    openBtn?.addEventListener('click', openSidebar);
+    closeBtn?.addEventListener('click', closeSidebar);
+    backdrop?.addEventListener('click', closeSidebar);
+</script>
+{% endblock %}
+{% endblock %}

@@ -30,20 +30,27 @@ $isLoggedIn = AuthController::isLoggedIn();
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $action = $_GET['action'] ?? null;
 
+// Handle logout — must come before other route checks
+if ($path === '/logout') {
+    $ctrl = new AuthController();
+    $ctrl->logout(); // destroys session and redirects to login
+    exit;
+}
+
 // Public pages (no login required)
 if ($action === 'login') {
     // Handle POST request for login
     $message = null;
     $messageType = null;
     $errors = null;
-    
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ctrl = new AuthController();
         $res = $ctrl->login($_POST);
 
         // Redirect on success
         if (!empty($res['success']) && $res['success'] === true) {
-            header('Location: /index.php?action=dashboard');
+            header('Location: /dashboard');
             exit;
         }
 
@@ -52,9 +59,9 @@ if ($action === 'login') {
         $messageType = $res['success'] ? 'success' : 'error';
         $errors = $res['errors'] ?? null;
     }
-    
+
     echo $twig->render('login.twig', [
-        'title' => 'Inloggen - AVG Consent',
+        'title' => 'Inloggen - AVG Verenigingen',
         'message' => $message,
         'messageType' => $messageType,
         'errors' => $errors,
@@ -66,7 +73,7 @@ if ($action === 'login') {
     $message = null;
     $messageType = null;
     $fieldErrors = [];
-    
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ctrl = new AuthController();
         $res = $ctrl->registerUser($_POST);
@@ -95,9 +102,9 @@ if ($action === 'login') {
             }
         }
     }
-    
+
     echo $twig->render('register.twig', [
-        'title' => 'Account Aanmaken - AVG Consent',
+        'title' => 'Account Aanmaken - AVG Verenigingen',
         'message' => $message,
         'messageType' => $messageType,
         'fieldErrors' => $fieldErrors,
@@ -108,7 +115,7 @@ if ($action === 'login') {
 
 if ($path === '/' || $path === '/index.php') {
     echo $twig->render('home.twig', [
-        'title' => 'AVG Consent - Toestemmingsbeheer vereenvoudigd',
+        'title' => 'AVG Verenigingen - Toestemmingsbeheer vereenvoudigd',
     ]);
 } elseif ($path === '/dashboard') {
     // Protected page - require login
@@ -117,26 +124,35 @@ if ($path === '/' || $path === '/index.php') {
         exit;
     }
     echo $twig->render('dashboard.twig', [
-        'title' => 'Dashboard - AVG Consent',
+        'title' => 'Dashboard - AVG Verenigingen',
     ]);
 } elseif ($path === '/campagne/nieuw') {
     header('Location: /campagne/form/verenigingsgegevens');
     exit;
 } elseif ($path === '/campagne/form/verenigingsgegevens') {
     echo $twig->render('nieuwe_campagne/verenigingsgegevens.twig', [
-        'title' => 'Verenigingsgegevens - AVG Consent',
+        'title' => 'Verenigingsgegevens - AVG Verenigingen',
     ]);
 } elseif ($path === '/campagne/form/vragen') {
     echo $twig->render('nieuwe_campagne/vragen.twig', [
-        'title' => 'Vragen - AVG Consent',
+        'title' => 'Vragen - AVG Verenigingen',
     ]);
 } elseif ($path === '/campagne/form/email-tekst') {
     echo $twig->render('nieuwe_campagne/email-tekst.twig', [
-        'title' => 'E-mail Tekst - AVG Consent',
+        'title' => 'E-mail Tekst - AVG Verenigingen',
     ]);
 } elseif ($path === '/campagne/form/ledenlijst') {
     echo $twig->render('nieuwe_campagne/ledenlijst.twig', [
-        'title' => 'Ledenlijst - AVG Consent',
+        'title' => 'Ledenlijst - AVG Verenigingen',
+    ]);
+} elseif ($path === '/instellingen') {
+    if (!$isLoggedIn) {
+        header('Location: /index.php?action=login');
+        exit;
+    }
+    echo $twig->render('instellingen.twig', [
+        'title' => 'Instellingen - AVG Verenigingen',
+        'user' => $_SESSION,
     ]);
 } else {
     // Protected pages - require login
@@ -148,7 +164,7 @@ if ($path === '/' || $path === '/index.php') {
     // Authenticated user pages
     if ($path === '/' || $path === '/index.php') {
         echo $twig->render('home.twig', [
-            'title' => 'AVG Consent - Toestemmingsbeheer vereenvoudigd',
+            'title' => 'AVG Verenigingen - Toestemmingsbeheer vereenvoudigd',
         ]);
     } else {
         header("HTTP/1.0 404 Not Found");

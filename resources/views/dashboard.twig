@@ -1,131 +1,292 @@
 {% extends 'layout.twig' %}
 
+{% block bodyClass %}page-dashboard{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
 {% block content %}
-	<div class="dashboard-header">
-		<div class="dashboard-container">
-			<div class="dashboard-top">
-				<div class="dashboard-title-section">
-					<h1 class="dashboard-title">Dashboard</h1>
-					<p class="dashboard-subtitle">Beheer uw toestemmingscampagnes</p>
-				</div>
-				<div class="dashboard-actions">
-					<a href="/campagne/nieuw" class="btn btn-primary btn-new-campaign">
-						<i data-lucide="plus" size="20"></i>
-						Nieuwe campagne
-					</a>
-				</div>
-			</div>
-		</div>
-	</div>
 
-	<div class="dashboard-stats">
-		<div class="dashboard-container">
-			<div class="stats-grid">
-				<div class="stat-box">
-					<div class="stat-icon icon-gray">
-						<i data-lucide="users"></i>
-					</div>
-					<div class="stat-content">
-						<p class="stat-label">Totaal leden</p>
-						<p class="stat-number">365</p>
-					</div>
-				</div>
+<!-- Mobile topbar (only visible on small screens) -->
+<div class="mobile-topbar">
+    <div class="mobile-topbar-brand">
+        <i data-lucide="shield-check"></i>
+        <span>AVG Verenigingen</span>
+    </div>
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu openen">
+        <i data-lucide="menu"></i>
+    </button>
+</div>
 
-				<div class="stat-box">
-					<div class="stat-icon icon-green">
-						<i data-lucide="check-circle"></i>
-					</div>
-					<div class="stat-content">
-						<p class="stat-label">Gereageerd</p>
-						<p class="stat-number">307</p>
-					</div>
-				</div>
+<!-- Sidebar overlay backdrop -->
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
-				<div class="stat-box">
-					<div class="stat-icon icon-green">
-						<i data-lucide="mail"></i>
-					</div>
-					<div class="stat-content">
-						<p class="stat-label">Actieve Campagnes</p>
-						<p class="stat-number">1</p>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+<div class="app-shell">
 
-	<div class="dashboard-campaigns">
-		<div class="dashboard-container">
-			<div class="campaigns-list">
-				<!-- Campaign 1 - Active -->
-				<div class="campaign-box campaign-active">
-					<div class="campaign-header">
-						<div class="campaign-info">
-							<h3 class="campaign-title">Jaarlijkse toestemming 2025</h3>
-							<p class="campaign-deadline">
-								<i data-lucide="clock" size="16"></i>
-								Deadline: 15-03-2025
-							</p>
-						</div>
-						<div class="campaign-badge badge-active">Actief</div>
-					</div>
-					<div class="campaign-progress">
-						<div class="progress-info">
-							<span class="progress-label">189 / 245 gereageerd</span>
-							<span class="progress-percentage">77%</span>
-						</div>
-						<div class="progress-bar">
-							<div class="progress-fill" style="width: 77%"></div>
-						</div>
-						<div class="progress-warning">
-							<i data-lucide="alert-triangle" size="16"></i>
-							<span>56 open</span>
-						</div>
-					</div>
-				</div>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <i data-lucide="shield-check"></i>
+            <span>AVG Verenigingen</span>
+            <!-- Close button, only visible on mobile -->
+            <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Menu sluiten">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
 
-				<!-- Campaign 2 - Completed -->
-				<div class="campaign-box campaign-completed">
-					<div class="campaign-header">
-						<div class="campaign-info">
-							<h3 class="campaign-title">Nieuwsbrief Toestemming</h3>
-							<p class="campaign-deadline">
-								<i data-lucide="clock" size="16"></i>
-								Deadline: 15-03-2024
-							</p>
-						</div>
-						<div class="campaign-badge badge-completed">Afgerond</div>
-					</div>
-					<div class="campaign-progress">
-						<div class="progress-info">
-							<span class="progress-label">118 / 120 gereageerd</span>
-							<span class="progress-percentage">98%</span>
-						</div>
-						<div class="progress-bar">
-							<div class="progress-fill" style="width: 98%"></div>
-						</div>
-					</div>
-				</div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="sidebar-link active">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/campagne/nieuw" class="sidebar-link">
+                <i data-lucide="plus-circle"></i>
+                <span>Nieuwe campagne</span>
+            </a>
+            <a href="#" class="sidebar-link">
+                <i data-lucide="bar-chart-2"></i>
+                <span>Rapportages</span>
+            </a>
+            <a href="/instellingen" class="sidebar-link">
+                <i data-lucide="settings"></i>
+                <span>Instellingen</span>
+            </a>
+        </nav>
 
-				<!-- Campaign 3 - Concept -->
-				<div class="campaign-box campaign-concept">
-					<div class="campaign-header">
-						<div class="campaign-info">
-							<h3 class="campaign-title">Foto Toestemming Jeugd</h3>
-						</div>
-						<div class="campaign-badge badge-concept">Concept</div>
-					</div>
-					<div class="campaign-progress">
-						<div class="progress-info">
-							<span class="progress-label">0 / 0 gereageerd</span>
-							<span class="progress-percentage">0%</span>
-						</div>
-						<div class="progress-bar">
-							<div class="progress-fill" style="width: 0%"></div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-avatar">
+                    <i data-lucide="user"></i>
+                </div>
+                <div class="sidebar-user-info">
+                    <p class="sidebar-user-name">Secretaris</p>
+                    <p class="sidebar-user-email">vereniging@avg.nl</p>
+                </div>
+            </div>
+            <a href="/logout" class="sidebar-logout" title="Uitloggen">
+                <i data-lucide="log-out"></i>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main content -->
+    <div class="main-content">
+
+        <!-- Top bar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1 class="topbar-title">Dashboard</h1>
+                <p class="topbar-subtitle">Beheer uw toestemmingscampagnes</p>
+            </div>
+            <div class="topbar-right">
+                <a href="/campagne/nieuw" class="btn btn-primary btn-new-campaign">
+                    <i data-lucide="plus" size="18"></i>
+                    Nieuwe campagne
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats row -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-card-icon icon-teal">
+                    <i data-lucide="users"></i>
+                </div>
+                <div class="stat-card-body">
+                    <p class="stat-card-label">Totaal leden</p>
+                    <p class="stat-card-value">365</p>
+                </div>
+                <div class="stat-card-trend trend-up">
+                    <i data-lucide="trending-up" size="14"></i>
+                    <span>+12%</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-icon icon-green">
+                    <i data-lucide="check-circle-2"></i>
+                </div>
+                <div class="stat-card-body">
+                    <p class="stat-card-label">Gereageerd</p>
+                    <p class="stat-card-value">307</p>
+                </div>
+                <div class="stat-card-trend trend-up">
+                    <i data-lucide="trending-up" size="14"></i>
+                    <span>84%</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-icon icon-blue">
+                    <i data-lucide="mail"></i>
+                </div>
+                <div class="stat-card-body">
+                    <p class="stat-card-label">Actieve campagnes</p>
+                    <p class="stat-card-value">1</p>
+                </div>
+                <div class="stat-card-trend trend-neutral">
+                    <i data-lucide="minus" size="14"></i>
+                    <span>Stabiel</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-icon icon-orange">
+                    <i data-lucide="clock"></i>
+                </div>
+                <div class="stat-card-body">
+                    <p class="stat-card-label">Wacht op reactie</p>
+                    <p class="stat-card-value">58</p>
+                </div>
+                <div class="stat-card-trend trend-down">
+                    <i data-lucide="trending-down" size="14"></i>
+                    <span>16%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section header -->
+        <div class="section-title-bar">
+            <h2 class="section-title-text">Campagnes</h2>
+            <span class="section-badge">3 totaal</span>
+        </div>
+
+        <!-- Campaign cards -->
+        <div class="campaign-cards">
+
+            <!-- Campaign 1 - Active -->
+            <div class="campaign-card">
+                <div class="campaign-card-header">
+                    <div class="campaign-card-meta">
+                        <span class="status-pill pill-active">
+                            <span class="pill-dot"></span>
+                            Actief
+                        </span>
+                        <span class="campaign-card-date">
+                            <i data-lucide="calendar" size="13"></i>
+                            Deadline: 15 mrt 2025
+                        </span>
+                    </div>
+                    <div class="campaign-card-actions">
+                        <button class="icon-btn" title="Bewerken">
+                            <i data-lucide="pencil" size="15"></i>
+                        </button>
+                        <button class="icon-btn" title="Rapport">
+                            <i data-lucide="download" size="15"></i>
+                        </button>
+                    </div>
+                </div>
+                <h3 class="campaign-card-title">Jaarlijkse toestemming 2025</h3>
+                <div class="campaign-card-progress">
+                    <div class="progress-row">
+                        <span class="progress-text">189 van 245 gereageerd</span>
+                        <span class="progress-pct">77%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill-bar fill-active" style="width: 77%"></div>
+                    </div>
+                </div>
+                <div class="campaign-card-footer">
+                    <span class="footer-warning">
+                        <i data-lucide="alert-triangle" size="14"></i>
+                        56 nog niet gereageerd
+                    </span>
+                    <a href="#" class="campaign-card-link">Bekijken <i data-lucide="arrow-right" size="14"></i></a>
+                </div>
+            </div>
+
+            <!-- Campaign 2 - Completed -->
+            <div class="campaign-card">
+                <div class="campaign-card-header">
+                    <div class="campaign-card-meta">
+                        <span class="status-pill pill-completed">
+                            <span class="pill-dot"></span>
+                            Afgerond
+                        </span>
+                        <span class="campaign-card-date">
+                            <i data-lucide="calendar" size="13"></i>
+                            Deadline: 15 mrt 2024
+                        </span>
+                    </div>
+                    <div class="campaign-card-actions">
+                        <button class="icon-btn" title="Rapport downloaden">
+                            <i data-lucide="download" size="15"></i>
+                        </button>
+                    </div>
+                </div>
+                <h3 class="campaign-card-title">Nieuwsbrief Toestemming</h3>
+                <div class="campaign-card-progress">
+                    <div class="progress-row">
+                        <span class="progress-text">118 van 120 gereageerd</span>
+                        <span class="progress-pct">98%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill-bar fill-completed" style="width: 98%"></div>
+                    </div>
+                </div>
+                <div class="campaign-card-footer">
+                    <span class="footer-success">
+                        <i data-lucide="check-circle-2" size="14"></i>
+                        Campagne succesvol afgerond
+                    </span>
+                    <a href="#" class="campaign-card-link">Bekijken <i data-lucide="arrow-right" size="14"></i></a>
+                </div>
+            </div>
+
+            <!-- Campaign 3 - Draft -->
+            <div class="campaign-card campaign-card-draft">
+                <div class="campaign-card-header">
+                    <div class="campaign-card-meta">
+                        <span class="status-pill pill-draft">
+                            <span class="pill-dot"></span>
+                            Concept
+                        </span>
+                    </div>
+                    <div class="campaign-card-actions">
+                        <button class="icon-btn" title="Bewerken">
+                            <i data-lucide="pencil" size="15"></i>
+                        </button>
+                        <button class="icon-btn icon-btn-danger" title="Verwijderen">
+                            <i data-lucide="trash-2" size="15"></i>
+                        </button>
+                    </div>
+                </div>
+                <h3 class="campaign-card-title">Foto Toestemming Jeugd</h3>
+                <p class="campaign-card-draft-hint">
+                    <i data-lucide="info" size="14"></i>
+                    Campagne is nog niet gestart. Klik op bewerken om verder te gaan.
+                </p>
+                <div class="campaign-card-footer">
+                    <span></span>
+                    <a href="/campagne/nieuw" class="campaign-card-link">Afronden <i data-lucide="arrow-right" size="14"></i></a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    const sidebar         = document.getElementById('sidebar');
+    const backdrop        = document.getElementById('sidebarBackdrop');
+    const openBtn         = document.getElementById('mobileMenuBtn');
+    const closeBtn        = document.getElementById('sidebarCloseBtn');
+
+    function openSidebar() {
+        sidebar.classList.add('sidebar-open');
+        backdrop.classList.add('backdrop-visible');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('sidebar-open');
+        backdrop.classList.remove('backdrop-visible');
+        document.body.style.overflow = '';
+    }
+
+    openBtn?.addEventListener('click', openSidebar);
+    closeBtn?.addEventListener('click', closeSidebar);
+    backdrop?.addEventListener('click', closeSidebar);
+</script>
+{% endblock %}
 {% endblock %}
