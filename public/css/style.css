@@ -1346,3 +1346,224 @@ section {
   height: 16px;
   color: #ea580c;
 }
+
+/* ============================================================
+   Auth / Login
+   ============================================================ */
+
+.center-container {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
+}
+
+.auth-form {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 48px 44px;
+  width: 100%;
+  max-width: 460px;
+  box-shadow:
+    0 20px 60px -10px rgba(20, 184, 166, 0.15),
+    0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(20, 184, 166, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle decorative top bar */
+.auth-form::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient);
+}
+
+.auth-form h2 {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--secondary);
+  margin-bottom: 6px;
+}
+
+.auth-form > p {
+  color: var(--text-light);
+  font-size: 0.95rem;
+  margin-bottom: 28px;
+}
+
+/* Messages */
+.auth-form .message {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-form .message.success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.auth-form .message.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+/* Error list */
+.auth-form .errors {
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 12px 16px 12px 32px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  color: #9a3412;
+}
+
+.auth-form .errors li {
+  margin-bottom: 4px;
+}
+
+.auth-form .errors li:last-child {
+  margin-bottom: 0;
+}
+
+/* Form groups */
+.auth-form .form-group {
+  margin-bottom: 20px;
+}
+
+.auth-form .form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--secondary);
+  margin-bottom: 8px;
+}
+
+.auth-form .form-group input[type="text"],
+.auth-form .form-group input[type="password"],
+.auth-form .form-group input[type="email"] {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--secondary);
+  background-color: #f8fafc;
+  transition: border-color 0.25s, box-shadow 0.25s, background-color 0.25s;
+  outline: none;
+}
+
+.auth-form .form-group input[type="text"]::placeholder,
+.auth-form .form-group input[type="password"]::placeholder,
+.auth-form .form-group input[type="email"]::placeholder {
+  color: #94a3b8;
+}
+
+.auth-form .form-group input[type="text"]:focus,
+.auth-form .form-group input[type="password"]:focus,
+.auth-form .form-group input[type="email"]:focus {
+  border-color: var(--primary);
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.12);
+}
+
+/* Remember me checkbox row */
+.auth-form .form-group.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.auth-form .form-group.remember-me input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.auth-form .form-group.remember-me label {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-light);
+  cursor: pointer;
+}
+
+/* Submit button overrides */
+.auth-form .btn-primary {
+  width: 100%;
+  padding: 13px 20px;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 10px;
+  background: var(--gradient);
+  border: none;
+  cursor: pointer;
+  color: var(--white);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.01em;
+}
+
+.auth-form .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(20, 184, 166, 0.35);
+  background: var(--gradient);
+}
+
+.auth-form .btn-primary:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Footer link */
+.auth-footer {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.auth-footer p {
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+
+.auth-footer a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.auth-footer a:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 520px) {
+  .auth-form {
+    padding: 36px 24px;
+  }
+
+  .auth-form h2 {
+    font-size: 1.5rem;
+  }
+}
