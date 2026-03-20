@@ -59,12 +59,12 @@
 						<div class="campaign-form-group">
 							<label for="email-template" class="campaign-form-label">Voorbeeld e-mail laden</label>
 							<div class="campaign-dropdown-wrapper">
-								<select id="email-template" name="email_template" class="campaign-form-dropdown">
+								<select id="email-template" name="email_template" class="campaign-form-dropdown" onchange="laadVoorbeeldTekst(this.value)">
 									<option value="">Kies een voorbeeld...</option>
-									<option value="template1">voorbeeld 1</option>
-									<option value="template2">voorbeeld 2</option>
-									<option value="template3">voorbeeld 3</option>
-									<option value="template4">voorbeeld 4</option>
+									<option value="template1">Voorbeeld 1 – Formeel</option>
+									<option value="template2">Voorbeeld 2 – Vriendelijk</option>
+									<option value="template3">Voorbeeld 3 – Kort & bondig</option>
+									<option value="template4">Voorbeeld 4 – Uitgebreid</option>
 								</select>
 								<i data-lucide="chevron-down" class="dropdown-icon"></i>
 							</div>
@@ -165,4 +165,132 @@ U heeft nog niet gereageerd op ons verzoek om toestemming. Wij willen u vriendel
 			</div>
 		</div>
 	</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+	const voorbeeldTeksten = {
+		template1: {
+			subject: 'Uw jaarlijkse toestemming – {verenigingsnaam}',
+			body: `Geachte {naam},
+
+Jaarlijks zijn wij als {verenigingsnaam} verplicht uw toestemming te verlengen voor het verwerken van uw persoonsgegevens conform de Algemene Verordening Gegevensbescherming (AVG).
+
+Wij verzoeken u vriendelijk de bijgevoegde vragen te beantwoorden via onderstaande link:
+
+{link}
+
+Dit neemt slechts enkele minuten van uw tijd in beslag. Uw medewerking wordt zeer op prijs gesteld.
+
+Met vriendelijke groet,
+{contactpersoon}
+{verenigingsnaam}`,
+			herinnering: `Geachte {naam},
+
+Kort geleden ontving u een verzoek om uw toestemming te verlengen voor de verwerking van uw persoonsgegevens door {verenigingsnaam}. Tot op heden hebben wij nog geen reactie van u ontvangen.
+
+Wij verzoeken u vriendelijk alsnog te reageren vóór {einddatum} via:
+
+{link}
+
+Met vriendelijke groet,
+{contactpersoon}
+{verenigingsnaam}`,
+			herinnering_subject: 'Herinnering: Toestemming vereist – {verenigingsnaam}'
+		},
+		template2: {
+			subject: 'Even je toestemming doorgeven – {verenigingsnaam}',
+			body: `Hoi {naam},
+
+We zijn weer bij! Elk jaar vragen we onze leden even om toestemming te geven voor het gebruik van hun gegevens. Dat is ook dit jaar niet anders.
+
+Klik op de link hieronder en beantwoord een paar korte vragen. Het kost je echt maar een minuutje:
+
+{link}
+
+Bedankt alvast!
+
+Groeten,
+{contactpersoon}
+{verenigingsnaam}`,
+			herinnering: `Hoi {naam},
+
+We hebben je toestemming nog niet ontvangen. Geen zorgen, het is nog niet te laat!
+
+Klik snel op de link en geef je toestemming door vóór {einddatum}:
+
+{link}
+
+Groeten,
+{contactpersoon}`,
+			herinnering_subject: 'Herinnering – even je toestemming doorgeven!'
+		},
+		template3: {
+			subject: 'Actie vereist: Toestemming AVG – {verenigingsnaam}',
+			body: `Beste {naam},
+
+We hebben uw toestemming nodig voor de verwerking van uw gegevens.
+
+Reageer via: {link}
+
+Deadline: {einddatum}
+
+Met groet,
+{contactpersoon}`,
+			herinnering: `Beste {naam},
+
+U heeft nog niet gereageerd. Reageer vóór {einddatum} via:
+
+{link}
+
+Met groet,
+{contactpersoon}`,
+			herinnering_subject: 'Herinnering: Actie vereist – {verenigingsnaam}'
+		},
+		template4: {
+			subject: 'Belangrijke mededeling: Jaarlijkse AVG-toestemming – {verenigingsnaam}',
+			body: `Beste {naam},
+
+Als lid van {verenigingsnaam} verwerken wij een aantal persoonsgegevens van u, zoals uw naam, adres en contactgegevens. Dit doen wij om de activiteiten van de vereniging goed te kunnen organiseren en om u op de hoogte te houden van relevante informatie.
+
+Op grond van de Algemene Verordening Gegevensbescherming (AVG) zijn wij verplicht om jaarlijks uw toestemming hiervoor te vernieuwen. Wij vragen u dan ook vriendelijk om onderstaande vragen te beantwoorden.
+
+Klik op de link hieronder om te beginnen:
+
+{link}
+
+Het invullen duurt slechts enkele minuten. Mocht u vragen hebben over de verwerking van uw gegevens, dan kunt u contact opnemen met {contactpersoon}.
+
+Met vriendelijke groet,
+{contactpersoon}
+{verenigingsnaam}`,
+			herinnering: `Beste {naam},
+
+Enkele dagen geleden ontving u een e-mail van {verenigingsnaam} met het verzoek uw toestemming te geven voor de verwerking van uw persoonsgegevens. Wij hebben gemerkt dat u nog niet heeft gereageerd.
+
+Wij begrijpen dat het druk kan zijn, maar wij vragen u vriendelijk dit alsnog te doen vóór {einddatum}. Zonder uw toestemming zijn wij helaas verplicht uw gegevens uit onze systemen te verwijderen.
+
+Klik hier om te reageren:
+
+{link}
+
+Hartstikke bedankt voor uw medewerking!
+
+Met vriendelijke groet,
+{contactpersoon}
+{verenigingsnaam}`,
+			herinnering_subject: 'Laatste herinnering: Uw toestemming is nog vereist – {verenigingsnaam}'
+		}
+	};
+
+	function laadVoorbeeldTekst(template) {
+		if (!template || !voorbeeldTeksten[template]) return;
+
+		const data = voorbeeldTeksten[template];
+		document.getElementById('email-subject').value = data.subject;
+		document.getElementById('email-body').value = data.body;
+		document.getElementById('reminder-subject').value = data.herinnering_subject;
+		document.getElementById('email-signature').value = data.herinnering;
+	}
+</script>
 {% endblock %}
