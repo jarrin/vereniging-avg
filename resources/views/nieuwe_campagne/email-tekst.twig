@@ -71,7 +71,20 @@
 						</div>
 
 						<div class="campaign-form-group">
-							<label for="email-subject" class="campaign-form-label">Onderwerp eerste e-mail *</label>
+					<label for="reply-to-email" class="campaign-form-label">Reply-To e-mailadres vereniging *</label>
+					<input 
+						type="email" 
+						id="reply-to-email" 
+						name="reply_to_email" 
+						class="campaign-form-input" 
+						placeholder="secretaris@vereniging.nl"
+						required
+					>
+					<p class="campaign-form-hint">Reacties van leden worden naar dit adres gestuurd.</p>
+				</div>
+
+				<div class="campaign-form-group">
+					<label for="email-subject" class="campaign-form-label">Onderwerp eerste e-mail *</label>
 							<input 
 								type="text" 
 								id="email-subject" 

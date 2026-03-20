@@ -7,8 +7,11 @@ class Campaign
     public $id;
     public $user_id;
     public $name;
+    public $reply_to_email;
     public $email_subject;
     public $email_body;
+    public $reminder_subject;
+    public $reminder_body;
     public $reminder_enabled;
     public $reminder_days;
     public $non_response_action;
@@ -25,8 +28,11 @@ class Campaign
             $this->id = $data['id'] ?? null;
             $this->user_id = $data['user_id'] ?? null;
             $this->name = $data['name'] ?? null;
+            $this->reply_to_email = $data['reply_to_email'] ?? null;
             $this->email_subject = $data['email_subject'] ?? null;
             $this->email_body = $data['email_body'] ?? null;
+            $this->reminder_subject = $data['reminder_subject'] ?? null;
+            $this->reminder_body = $data['reminder_body'] ?? null;
             $this->reminder_enabled = $data['reminder_enabled'] ?? false;
             $this->reminder_days = $data['reminder_days'] ?? 7;
             $this->non_response_action = $data['non_response_action'] ?? 'no_action';
@@ -105,7 +111,7 @@ class Campaign
     /**
      * Create a new campaign
      */
-    public static function create(string $user_id, string $name, string $email_subject = '', string $email_body = ''): array
+    public static function create(string $user_id, string $name, string $reply_to_email = '', string $email_subject = '', string $email_body = ''): array
     {
         if (!$user_id || !$name) {
             return ['success' => false, 'message' => 'Vul alle verplichte velden in.'];
@@ -115,8 +121,8 @@ class Campaign
         $id = uniqid('', true);
 
         try {
-            $stmt = $pdo->prepare('INSERT INTO campaigns (id, user_id, name, email_subject, email_body, status, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())');
-            $stmt->execute([$id, $user_id, $name, $email_subject, $email_body, 'draft']);
+            $stmt = $pdo->prepare('INSERT INTO campaigns (id, user_id, name, reply_to_email, email_subject, email_body, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())');
+            $stmt->execute([$id, $user_id, $name, $reply_to_email, $email_subject, $email_body, 'draft']);
             return ['success' => true, 'message' => 'Campagne aangemaakt.', 'id' => $id];
         } catch (\PDOException $e) {
             return ['success' => false, 'message' => 'Database fout: ' . $e->getMessage()];
@@ -130,11 +136,14 @@ class Campaign
     {
         try {
             $pdo = Database::getConnection();
-            $stmt = $pdo->prepare('UPDATE campaigns SET name = ?, email_subject = ?, email_body = ?, status = ?, reminder_enabled = ?, reminder_days = ?, non_response_action = ?, start_date = ?, end_date = ? WHERE id = ?');
+            $stmt = $pdo->prepare('UPDATE campaigns SET name = ?, reply_to_email = ?, email_subject = ?, email_body = ?, reminder_subject = ?, reminder_body = ?, status = ?, reminder_enabled = ?, reminder_days = ?, non_response_action = ?, start_date = ?, end_date = ? WHERE id = ?');
             $stmt->execute([
                 $this->name,
+                $this->reply_to_email,
                 $this->email_subject,
                 $this->email_body,
+                $this->reminder_subject,
+                $this->reminder_body,
                 $this->status,
                 $this->reminder_enabled ? 1 : 0,
                 $this->reminder_days,

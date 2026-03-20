@@ -22,8 +22,11 @@ CREATE TABLE campaigns (
     id CHAR(36) PRIMARY KEY,
     user_id CHAR(36) NOT NULL,
     name VARCHAR(255) NOT NULL,
+    reply_to_email VARCHAR(255) NULL,
     email_subject VARCHAR(255) NOT NULL,
     email_body TEXT NOT NULL,
+    reminder_subject VARCHAR(255) NULL,
+    reminder_body TEXT NULL,
     reminder_enabled BOOLEAN DEFAULT FALSE,
     reminder_days INTEGER DEFAULT 7,
     non_response_action ENUM('send_reminder', 'default_no', 'no_action') DEFAULT 'no_action',
@@ -35,6 +38,11 @@ CREATE TABLE campaigns (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+-- Migratie voor bestaande databases:
+-- ALTER TABLE campaigns ADD COLUMN reply_to_email VARCHAR(255) NULL AFTER name;
+-- ALTER TABLE campaigns ADD COLUMN reminder_subject VARCHAR(255) NULL AFTER email_body;
+-- ALTER TABLE campaigns ADD COLUMN reminder_body TEXT NULL AFTER reminder_subject;
 
 CREATE TABLE questions (
     id CHAR(36) PRIMARY KEY,
