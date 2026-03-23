@@ -8,6 +8,7 @@ class User
     public $id;
     public $username;
     public $email;
+    public $logo_path;
     public $created_at;
     public $last_login;
     public $is_active;
@@ -24,6 +25,7 @@ class User
             $this->id = $data['id'] ?? null;
             $this->username = $data['username'] ?? null;
             $this->email = $data['email'] ?? null;
+            $this->logo_path = $data['logo_path'] ?? null;
             $this->created_at = $data['created_at'] ?? null;
             $this->last_login = $data['last_login'] ?? null;
             $this->is_active = isset($data['is_active']) ? (int)$data['is_active'] : null;
@@ -81,6 +83,10 @@ class User
         if (isset($data['email'])) {
             $fields[] = 'email = ?';
             $values[] = trim($data['email']);
+        }
+        if (array_key_exists('logo_path', $data)) {
+            $fields[] = 'logo_path = ?';
+            $values[] = $data['logo_path'];
         }
         if (!empty($data['password'])) {
             $fields[] = 'password_hash = ?';
