@@ -43,23 +43,28 @@
 
 						<p class="campaign-question-instructions">Definieer maximaal 5 vragen die uw leden met Ja of Nee beantwoorden</p>
 
-						<div class="campaign-question-group">
-							<div class="campaign-question-number">1</div>
-							<div class="campaign-question-field">
-								<textarea 
-									id="question-1" 
-									name="question_1" 
-									class="campaign-form-input" 
-									placeholder="Geeft u toestemming voor het ontvangen van e-mailcommunicatie van onze vereniging?"
-									required
-								></textarea>
+						<div id="questions-container">
+							<div class="campaign-question-group" data-question="1">
+								<div class="campaign-question-number">1</div>
+								<div class="campaign-question-field">
+									<textarea 
+										id="question-1" 
+										name="questions[]" 
+										class="campaign-form-input" 
+										placeholder="Geeft u toestemming voor het ontvangen van e-mailcommunicatie van onze vereniging?"
+										required
+										rows="2"
+									></textarea>
+								</div>
+								<!-- Placeholder for alignment, question 1 cannot be removed -->
+								<div style="width: 24px;"></div>
 							</div>
 						</div>
 
-						<div class="campaign-form-group">
-							<button type="button" class="campaign-add-question-button">
-							<i data-lucide="plus" size="17"></i>
-							<span>Vraag toevoegen</span>
+						<div class="campaign-form-group" style="margin-top: 20px;">
+							<button type="button" class="campaign-add-question-button" id="add-question-btn">
+								<i data-lucide="plus" size="17"></i>
+								<span>Vraag toevoegen</span>
 							</button>
 						</div>
 					</div>
@@ -78,4 +83,70 @@
 			</div>
 		</div>
 	</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('questions-container');
+    const addBtn = document.getElementById('add-question-btn');
+    const maxQuestions = 5;
+
+    function updateQuestionNumbers() {
+        const groups = container.querySelectorAll('.campaign-question-group');
+        groups.forEach((group, index) => {
+            const number = index + 1;
+            group.setAttribute('data-question', number);
+            group.querySelector('.campaign-question-number').textContent = number;
+            group.querySelector('textarea').id = `question-${number}`;
+            group.querySelector('textarea').placeholder = `Vraag ${number}`;
+        });
+        
+        if (groups.length >= maxQuestions) {
+            addBtn.style.display = 'none';
+        } else {
+            addBtn.style.display = 'inline-flex';
+        }
+    }
+
+    addBtn.addEventListener('click', () => {
+        const currentCount = container.querySelectorAll('.campaign-question-group').length;
+        if (currentCount >= maxQuestions) return;
+
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'campaign-question-group';
+        groupDiv.style.marginTop = '15px';
+        
+        groupDiv.innerHTML = `
+            <div class="campaign-question-number"></div>
+            <div class="campaign-question-field">
+                <textarea 
+                    name="questions[]" 
+                    class="campaign-form-input" 
+                    required
+                    rows="2"
+                ></textarea>
+            </div>
+            <button type="button" class="question-remove-btn" title="Vraag verwijderen" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 4px; display: flex;">
+                <i data-lucide="trash-2" size="20"></i>
+            </button>
+        `;
+
+        // Add remove functionality
+        const removeBtn = groupDiv.querySelector('.question-remove-btn');
+        removeBtn.addEventListener('click', () => {
+            groupDiv.remove();
+            updateQuestionNumbers();
+        });
+
+        container.appendChild(groupDiv);
+        lucide.createIcons({ root: groupDiv });
+        updateQuestionNumbers();
+        
+        // Focus the new textarea
+        groupDiv.querySelector('textarea').focus();
+    });
+});
+</script>
 {% endblock %}

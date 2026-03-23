@@ -96,11 +96,19 @@
 
 						<div class="campaign-form-group">
 							<label class="campaign-form-label">Logo (.jpg max 2MB, bij voorkeur 200x200px)</label>
-							<label class="campaign-upload-button">
-								<input type="file" accept=".jpg,.jpeg" style="display: none;">
-								<i data-lucide="upload" size="20"></i>
-								<span>Upload Logo</span>
-							</label>
+							<div class="logo-upload-wrapper">
+								<label class="campaign-upload-button">
+									<input type="file" id="logo-upload-input" accept=".jpg,.jpeg,.png" style="display: none;">
+									<i data-lucide="upload" size="20"></i>
+									<span>Kies Logo</span>
+								</label>
+								<div class="logo-preview-container" id="logo-preview-container" style="display: none;">
+									<img id="logo-preview-image" src="" alt="Logo preview">
+									<button type="button" class="logo-remove-btn" id="logo-remove-btn" aria-label="Verwijder logo">
+										<i data-lucide="x" size="16"></i>
+									</button>
+								</div>
+							</div>
 						</div>
 					</div>
 
@@ -118,4 +126,44 @@
 			</div>
 		</div>
 	</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('logo-upload-input');
+    const previewContainer = document.getElementById('logo-preview-container');
+    const previewImage = document.getElementById('logo-preview-image');
+    const removeBtn = document.getElementById('logo-remove-btn');
+    const uploadLabel = document.querySelector('.campaign-upload-button');
+
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        
+        if (file) {
+            // Check file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Het geselecteerde bestand is groter dan 2MB. Kies een kleiner bestand.');
+                fileInput.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                previewContainer.style.display = 'block';
+                // Hide the upload button since we have a preview
+                uploadLabel.style.display = 'none';
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    removeBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        previewImage.src = '';
+        previewContainer.style.display = 'none';
+        uploadLabel.style.display = 'flex'; // show the upload button again
+    });
+});
 {% endblock %}
