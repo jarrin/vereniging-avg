@@ -307,6 +307,26 @@ if ($path === '/' || $path === '/index.php') {
     echo $twig->render('nieuwe_campagne/ledenlijst.twig', [
         'title' => 'Ledenlijst - AVG Verenigingen',
     ]);
+} elseif ($path === '/rapportages') {
+    if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
+    $pdo = Database::getConnection();
+    
+    // Fetch campaigns
+    $stmt = $pdo->prepare("SELECT * FROM campaigns WHERE user_id = ? AND status != 'deleted' ORDER BY created_at DESC");
+    $stmt->execute([$_SESSION['user_id']]);
+    $campaigns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    foreach ($campaigns as &$c) {
+        $stmtTotal = $pdo->prepare("SELECT COUNT(*) as total FROM persons WHERE campaign_id = ?");
+        $stmtTotal->execute([$c['id']]);
+        $c['total_members'] = $stmtTotal->fetch()['total'];
+    }
+    
+    echo $twig->render('rapportages.twig', [
+        'title' => 'Rapportages - AVG Verenigingen',
+        'campaigns' => $campaigns,
+        'active_page' => 'rapportages'
+    ]);
 } elseif (preg_match('/^\/campagne\/view\/(.+)$/', $path, $matches)) {
     if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
     require_once __DIR__ . '/../models/Campaign.php';

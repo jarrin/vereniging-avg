@@ -1,0 +1,102 @@
+{% extends 'layout.twig' %}
+
+{% block bodyClass %}page-dashboard{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<!-- Mobile topbar -->
+<div class="mobile-topbar">
+    <a href="/dashboard" class="mobile-topbar-brand">
+        <i data-lucide="shield-check"></i>
+        <span>AVG Verenigingen</span>
+    </a>
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i data-lucide="menu"></i>
+    </button>
+</div>
+
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+<div class="app-shell">
+    {% include 'includes/sidebar.twig' with {'active_page': 'rapportages'} %}
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1 class="topbar-title">Rapportages</h1>
+                <p class="topbar-subtitle">Download uw AVG-toestemmingsrapporten</p>
+            </div>
+        </div>
+
+        <div class="campaign-card" style="margin-top: 2rem;">
+            <h3 style="margin-bottom: 1rem;">Overzicht Rapporten</h3>
+            <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 2rem;">Hieronder vindt u alle campagnes waarvan u het eindrapport kunt downloaden. Rapporten zijn pas volledig na de einddatum van de campagne.</p>
+            
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e2e8f0; text-align: left;">
+                            <th style="padding: 1rem;">Campagne Naam</th>
+                            <th style="padding: 1rem;">Einddatum</th>
+                            <th style="padding: 1rem;">Leden</th>
+                            <th style="padding: 1rem;">Status</th>
+                            <th style="padding: 1rem; text-align: right;">Actie</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for campaign in campaigns %}
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 1rem; font-weight: 500;">{{ campaign.name }}</td>
+                                <td style="padding: 1rem;">{{ campaign.end_date ? campaign.end_date|date('d-m-Y') : '-' }}</td>
+                                <td style="padding: 1rem;">{{ campaign.total_members }}</td>
+                                <td style="padding: 1rem;">
+                                    <span class="status-pill pill-{{ campaign.status }}">
+                                        {{ (campaign.status == 'active' ? 'Lopend' : (campaign.status == 'completed' ? 'Gereed' : 'Concept')) }}
+                                    </span>
+                                </td>
+                                <td style="padding: 1rem; text-align: right;">
+                                    <a href="/campagne/report/{{ campaign.id }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+                                        <i data-lucide="download" size="14"></i>
+                                        Rapport Downloaden
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if campaigns is empty %}
+                <div style="text-align: center; padding: 4rem; color: #94a3b8;">
+                    <i data-lucide="file-x-2" size="48" style="margin-bottom: 1rem;"></i>
+                    <p>Nog geen rapporten beschikbaar om te downloaden.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const sidebar         = document.getElementById('sidebar');
+    const backdrop        = document.getElementById('sidebarBackdrop');
+    const openBtn         = document.getElementById('mobileMenuBtn');
+    const closeBtn        = document.getElementById('sidebarCloseBtn');
+
+    function openSidebar() {
+        sidebar.classList.add('sidebar-open');
+        backdrop.classList.add('backdrop-visible');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('sidebar-open');
+        backdrop.classList.remove('backdrop-visible');
+    }
+
+    if(openBtn) openBtn.addEventListener('click', openSidebar);
+    if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
+    if(backdrop) backdrop.addEventListener('click', closeSidebar);
+</script>
+{% endblock %}
