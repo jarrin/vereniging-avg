@@ -1156,6 +1156,7 @@ section {
   font-weight: 800;
   color: var(--white);
   border-bottom: 1px solid rgba(255,255,255,0.08);
+  text-decoration: none;
 }
 
 .sidebar-brand i {
@@ -1888,6 +1889,8 @@ section {
   gap: 10px;
   font-weight: 800;
   font-size: 1.05rem;
+  text-decoration: none;
+  color: inherit;
 }
 
 .mobile-topbar-brand i {

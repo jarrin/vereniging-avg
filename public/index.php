@@ -15,12 +15,17 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Setup Twig
 $loader = new FilesystemLoader(__DIR__ . '/../resources/views');
 $twig = new Environment($loader, [
     'cache' => false, // Set to __DIR__ . '/../storage/cache' in production
     'debug' => true,
 ]);
+$twig->addGlobal('session', $_SESSION);
 
 // Check if user is logged in
 require_once __DIR__ . '/../controllers/Authcontroller.php';
@@ -123,25 +128,167 @@ if ($path === '/' || $path === '/index.php') {
         header('Location: /index.php?action=login');
         exit;
     }
+    
+    require_once __DIR__ . '/../models/Campaign.php';
+    $pdo = Database::getConnection();
+    $stmt = $pdo->prepare('SELECT * FROM campaigns WHERE user_id = ? ORDER BY created_at DESC');
+    $stmt->execute([$_SESSION['user_id']]);
+    $campaigns = $stmt->fetchAll();
+    
+    // Add stats for each campaign
+    foreach ($campaigns as &$campaign) {
+        $stmtTotal = $pdo->prepare('SELECT COUNT(*) as total FROM persons WHERE campaign_id = ?');
+        $stmtTotal->execute([$campaign['id']]);
+        $campaign['total_members'] = $stmtTotal->fetch()['total'];
+        
+        $stmtResponded = $pdo->prepare('SELECT COUNT(*) as responded FROM persons WHERE campaign_id = ? AND responded_at IS NOT NULL');
+        $stmtResponded->execute([$campaign['id']]);
+        $campaign['responded_count'] = $stmtResponded->fetch()['responded'];
+        
+        $campaign['response_pct'] = $campaign['total_members'] > 0 ? round(($campaign['responded_count'] / $campaign['total_members']) * 100) : 0;
+    }
+    
+    // General stats
+    $stmtTotalAll = $pdo->prepare('SELECT COUNT(*) as total FROM persons p JOIN campaigns c ON p.campaign_id = c.id WHERE c.user_id = ?');
+    $stmtTotalAll->execute([$_SESSION['user_id']]);
+    $totalMembers = $stmtTotalAll->fetch()['total'];
+    
     echo $twig->render('dashboard.twig', [
         'title' => 'Dashboard - AVG Verenigingen',
+        'campaigns' => $campaigns,
+        'total_members' => $totalMembers,
+        'message' => $_GET['message'] ?? null,
     ]);
 } elseif ($path === '/campagne/nieuw') {
     header('Location: /campagne/form/verenigingsgegevens');
     exit;
 } elseif ($path === '/campagne/form/verenigingsgegevens') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $_SESSION['new_campaign'] = array_merge($_SESSION['new_campaign'] ?? [], $_POST);
+        
+        // Handle logo upload
+        if (!empty($_FILES['logo']['name'])) {
+            $uploadDir = __DIR__ . '/uploads/logos/';
+            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+            
+            $fileExtension = strtolower(pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION));
+            $newFileName = uniqid('logo_') . '.' . $fileExtension;
+            $targetPath = $uploadDir . $newFileName;
+            
+            if (move_uploaded_file($_FILES['logo']['tmp_name'], $targetPath)) {
+                $_SESSION['new_campaign']['logo_path'] = '/uploads/logos/' . $newFileName;
+            }
+        } elseif (!empty($_POST['existing_logo'])) {
+             $_SESSION['new_campaign']['logo_path'] = $_POST['existing_logo'];
+        }
+        
+        header('Location: /campagne/form/vragen');
+        exit;
+    }
     echo $twig->render('nieuwe_campagne/verenigingsgegevens.twig', [
         'title' => 'Verenigingsgegevens - AVG Verenigingen',
     ]);
 } elseif ($path === '/campagne/form/vragen') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $_SESSION['new_campaign']['questions'] = $_POST['questions'] ?? [];
+        header('Location: /campagne/form/email-tekst');
+        exit;
+    }
     echo $twig->render('nieuwe_campagne/vragen.twig', [
         'title' => 'Vragen - AVG Verenigingen',
     ]);
 } elseif ($path === '/campagne/form/email-tekst') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $_SESSION['new_campaign'] = array_merge($_SESSION['new_campaign'] ?? [], $_POST);
+        header('Location: /campagne/form/ledenlijst');
+        exit;
+    }
     echo $twig->render('nieuwe_campagne/email-tekst.twig', [
         'title' => 'E-mail Tekst - AVG Verenigingen',
     ]);
 } elseif ($path === '/campagne/form/ledenlijst') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Collect all data
+        $data = $_SESSION['new_campaign'] ?? [];
+        $data = array_merge($data, $_POST);
+        
+        // 1. Create Campaign
+        require_once __DIR__ . '/../models/Campaign.php';
+        $res = Campaign::create(
+            $_SESSION['user_id'], 
+            $data['org_name'] ?? 'Nieuwe Campagne',
+            $data['reply_to_email'] ?? '',
+            $data['email_subject'] ?? '',
+            $data['email_body'] ?? ''
+        );
+        
+        if ($res['success']) {
+            $campaignId = $res['id'];
+            $campaign = Campaign::findById($campaignId);
+            $campaign->end_date = $data['end_date'] ?? null;
+            $campaign->reminder_subject = $data['reminder_subject'] ?? '';
+            $campaign->reminder_body = $data['email_signature'] ?? ''; 
+            
+            // Map 'reminder' to 'send_reminder' as per schema enum
+            $campaign->non_response_action = ($data['action_no_response'] ?? 'no_action') === 'reminder' ? 'send_reminder' : 'no_action';
+            
+            $campaign->reminder_days = $data['reminder_days'] ?? 7;
+            $campaign->reminder_enabled = ($campaign->non_response_action === 'send_reminder');
+            $campaign->status = 'active'; 
+            $campaign->update();
+            
+            // 2. Add Questions
+            $pdo = Database::getConnection();
+            $questions = $data['questions'] ?? [];
+            foreach ($questions as $index => $qText) {
+                if (trim($qText) === '') continue;
+                $qId = uniqid('', true);
+                // Schema has no 'type' column, only id, campaign_id, question_text, sort_order, created_at
+                $stmt = $pdo->prepare('INSERT INTO questions (id, campaign_id, question_text, sort_order, created_at) VALUES (?, ?, ?, ?, NOW())');
+                $stmt->execute([$qId, $campaignId, $qText, $index]);
+            }
+            
+            // 3. Process Member List (Excel/CSV)
+            if (!empty($_FILES['member_list']['name'])) {
+                try {
+                    $filePath = $_FILES['member_list']['tmp_name'];
+                    $ext = strtolower(pathinfo($_FILES['member_list']['name'], PATHINFO_EXTENSION));
+                    
+                    require_once __DIR__ . '/../models/Person.php';
+                    
+                    if ($ext === 'csv') {
+                        if (($handle = fopen($filePath, "r")) !== FALSE) {
+                            while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                                if (count($row) >= 2 && !empty($row[0]) && !empty($row[1])) {
+                                    Person::register($row[0], $row[1], $campaignId);
+                                }
+                            }
+                            fclose($handle);
+                        }
+                    } else {
+                        // Excel processing with PhpSpreadsheet
+                        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+                        $worksheet = $spreadsheet->getActiveSheet();
+                        $rows = $worksheet->toArray();
+                        foreach ($rows as $index => $row) {
+                            if ($index === 0) continue; // Skip header
+                            if (!empty($row[0]) && !empty($row[1])) {
+                                Person::register($row[0], $row[1], $campaignId);
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Silently fail for now or handle as needed
+                }
+            }
+            
+            unset($_SESSION['new_campaign']);
+            header('Location: /dashboard?message=campaign_created');
+            exit;
+        } else {
+             die("Campaign creation failed: " . $res['message']);
+        }
+    }
     echo $twig->render('nieuwe_campagne/ledenlijst.twig', [
         'title' => 'Ledenlijst - AVG Verenigingen',
     ]);

@@ -32,7 +32,8 @@
 						</div>
 					</div>
 
-					<div class="campaign-form-wrapper">
+					<form action="/campagne/form/vragen" method="POST">
+						<div class="campaign-form-wrapper">
 						<div class="campaign-form-header">
 							<i data-lucide="help-circle" class="campaign-form-icon"></i>
 							<div class="campaign-form-header-text">
@@ -44,21 +45,44 @@
 						<p class="campaign-question-instructions">Definieer maximaal 5 vragen die uw leden met Ja of Nee beantwoorden</p>
 
 						<div id="questions-container">
-							<div class="campaign-question-group" data-question="1">
-								<div class="campaign-question-number">1</div>
-								<div class="campaign-question-field">
-									<textarea 
-										id="question-1" 
-										name="questions[]" 
-										class="campaign-form-input" 
-										placeholder="Geeft u toestemming voor het ontvangen van e-mailcommunicatie van onze vereniging?"
-										required
-										rows="2"
-									></textarea>
+							{% if session.new_campaign.questions is empty %}
+								<div class="campaign-question-group" data-question="1">
+									<div class="campaign-question-number">1</div>
+									<div class="campaign-question-field">
+										<textarea 
+											id="question-1" 
+											name="questions[]" 
+											class="campaign-form-input" 
+											placeholder="Geeft u toestemming voor het ontvangen van e-mailcommunicatie van onze vereniging?"
+											required
+											rows="2"
+										></textarea>
+									</div>
+									<div style="width: 24px;"></div>
 								</div>
-								<!-- Placeholder for alignment, question 1 cannot be removed -->
-								<div style="width: 24px;"></div>
-							</div>
+							{% else %}
+								{% for question in session.new_campaign.questions %}
+									<div class="campaign-question-group" data-question="{{ loop.index }}">
+										<div class="campaign-question-number">{{ loop.index }}</div>
+										<div class="campaign-question-field">
+											<textarea 
+												id="question-{{ loop.index }}" 
+												name="questions[]" 
+												class="campaign-form-input" 
+												required
+												rows="2"
+											>{{ question }}</textarea>
+										</div>
+										{% if loop.index > 1 %}
+											<button type="button" class="question-remove-btn" title="Vraag verwijderen" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 4px; display: flex;">
+												<i data-lucide="trash-2" size="20"></i>
+											</button>
+										{% else %}
+											<div style="width: 24px;"></div>
+										{% endif %}
+									</div>
+								{% endfor %}
+							{% endif %}
 						</div>
 
 						<div class="campaign-form-group" style="margin-top: 20px;">
@@ -69,16 +93,17 @@
 						</div>
 					</div>
 
-					<div class="campaign-form-navigation">
-						<a href="/campagne/form/verenigingsgegevens" class="campaign-btn-nav campaign-btn-nav-prev">
-							<i data-lucide="arrow-left" size="24"></i>
-							<span>Vorige</span>
-						</a>
-						<a href="/campagne/form/email-tekst" class="campaign-btn-nav campaign-btn-nav-next">
-							<span>Volgende</span>
-							<i data-lucide="arrow-right" size="24"></i>
-						</a>
-					</div>
+						<div class="campaign-form-navigation">
+							<a href="/campagne/form/verenigingsgegevens" class="campaign-btn-nav campaign-btn-nav-prev">
+								<i data-lucide="arrow-left" size="24"></i>
+								<span>Vorige</span>
+							</a>
+							<button type="submit" id="next-btn" class="campaign-btn-nav campaign-btn-nav-next campaign-btn-nav-next-foggy" style="pointer-events: none; border: none; cursor: default;">
+								<span>Volgende</span>
+								<i data-lucide="arrow-right" size="24"></i>
+							</button>
+						</div>
+					</form>
 				</div>
 			</div>
 		</div>
@@ -147,6 +172,42 @@ document.addEventListener('DOMContentLoaded', () => {
         // Focus the new textarea
         groupDiv.querySelector('textarea').focus();
     });
+
+    // Check required fields
+    const nextBtn = document.getElementById('next-btn');
+    
+    function checkRequiredQuestions() {
+        const textareas = container.querySelectorAll('.campaign-form-input');
+        let allValid = true;
+        textareas.forEach(ta => {
+            if (ta.value.trim() === '') {
+                allValid = false;
+            }
+        });
+
+        if (allValid && textareas.length > 0) {
+            nextBtn.classList.remove('campaign-btn-nav-next-foggy');
+            nextBtn.style.pointerEvents = 'auto';
+            nextBtn.style.cursor = 'pointer';
+        } else {
+            nextBtn.classList.add('campaign-btn-nav-next-foggy');
+            nextBtn.style.pointerEvents = 'none';
+            nextBtn.style.cursor = 'default';
+        }
+    }
+
+    container.addEventListener('input', checkRequiredQuestions);
+
+        // Add remove functionality for pre-rendered buttons
+    container.querySelectorAll('.question-remove-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.closest('.campaign-question-group').remove();
+            updateQuestionNumbers();
+            checkRequiredQuestions();
+        });
+    });
+
+    checkRequiredQuestions();
 });
 </script>
 {% endblock %}

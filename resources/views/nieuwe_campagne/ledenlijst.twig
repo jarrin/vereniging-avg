@@ -36,6 +36,7 @@
 						</div>
 					</div>
 
+					<form action="/campagne/form/ledenlijst" method="POST" enctype="multipart/form-data">
 					<div class="campaign-form-wrapper">
 						<div class="campaign-form-header">
 							<i data-lucide="users" class="campaign-form-icon"></i>
@@ -92,15 +93,16 @@
 						</div>
 					</div>
 
-					<div class="campaign-form-navigation">
-						<a href="/campagne/form/email-tekst" class="campaign-btn-nav campaign-btn-nav-prev">
-							<i data-lucide="arrow-left" size="24"></i>
-							<span>Vorige</span>
-						</a>
-						<button type="submit" class="campaign-btn-nav campaign-btn-nav-next campaign-btn-nav-next-foggy" id="submit-campaign-btn" disabled style="border: none; cursor: default;">
-							<span>Campagne Aanmaken</span>
-						</button>
-					</div>
+						<div class="campaign-form-navigation">
+							<a href="/campagne/form/email-tekst" class="campaign-btn-nav campaign-btn-nav-prev">
+								<i data-lucide="arrow-left" size="24"></i>
+								<span>Vorige</span>
+							</a>
+							<button type="submit" class="campaign-btn-nav campaign-btn-nav-next campaign-btn-nav-next-foggy" id="submit-campaign-btn" disabled style="border: none; cursor: default;">
+								<span>Campagne Aanmaken</span>
+							</button>
+						</div>
+					</form>
 				</div>
 			</div>
 		</div>
@@ -117,10 +119,13 @@
 			const selectedFileName = document.getElementById('selected-file-name');
 			const uploadIcon = document.getElementById('upload-icon');
 			const submitBtn = document.getElementById('submit-campaign-btn');
-			const originalDateInput = document.getElementById('end-date'); // Will use the one declared below instead
+			const dateInput = document.getElementById('end-date');
 
 			function checkFormReady() {
-				if (memberListInput.files.length > 0 && originalDateInput.value) {
+				const hasFile = memberListInput.files.length > 0;
+				const hasDate = dateInput.value.trim() !== '';
+				
+				if (hasFile && hasDate) {
 					submitBtn.disabled = false;
 					submitBtn.classList.remove('campaign-btn-nav-next-foggy');
 					submitBtn.style.cursor = 'pointer';
@@ -134,10 +139,8 @@
 			memberListInput.addEventListener('change', function(e) {
 				const file = e.target.files[0];
 				if (file) {
-					// Check if it's Excel/CSV
 					const validTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
 					const validExtensions = ['.csv', '.xls', '.xlsx'];
-					
 					const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
 					
 					if (validTypes.includes(file.type) || validExtensions.includes(fileExtension)) {
@@ -147,21 +150,18 @@
 						lucide.createIcons();
 						selectedFileName.textContent = file.name + ' geselecteerd';
 						selectedFileName.style.display = 'block';
-						checkFormReady();
 					} else {
 						alert('Kies een geldig .csv of .xlsx bestand a.u.b.');
 						memberListInput.value = '';
+						selectedFileName.style.display = 'none';
+						uploadText.style.display = 'block';
 					}
 				}
+				checkFormReady();
 			});
 
-			originalDateInput.addEventListener('change', checkFormReady);
-			const dateInput = document.getElementById('end-date');
-			const datePickerBtn = document.getElementById('date-picker-btn');
-			const calendarPopup = document.getElementById('calendar-popup');
-			const calendarMonth = document.getElementById('calendar-month');
-			const calendarYear = document.getElementById('calendar-year');
-			const calendarDaysContainer = document.getElementById('calendar-days-container');
+			dateInput.addEventListener('input', checkFormReady);
+			dateInput.addEventListener('change', checkFormReady);
 
 			if (!dateInput) return;
 

@@ -8,10 +8,10 @@
 
 <!-- Mobile topbar (only visible on small screens) -->
 <div class="mobile-topbar">
-    <div class="mobile-topbar-brand">
+    <a href="/dashboard" class="mobile-topbar-brand">
         <i data-lucide="shield-check"></i>
         <span>AVG Verenigingen</span>
-    </div>
+    </a>
     <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu openen">
         <i data-lucide="menu"></i>
     </button>
@@ -24,14 +24,15 @@
 
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
+        <a href="/dashboard" class="sidebar-brand">
             <i data-lucide="shield-check"></i>
             <span>AVG Verenigingen</span>
+        </a>
             <!-- Close button, only visible on mobile -->
             <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Menu sluiten">
                 <i data-lucide="x"></i>
             </button>
-        </div>
+
 
         <nav class="sidebar-nav">
             <a href="/dashboard" class="sidebar-link active">
@@ -93,7 +94,7 @@
                 </div>
                 <div class="stat-card-body">
                     <p class="stat-card-label">Totaal leden</p>
-                    <p class="stat-card-value">365</p>
+                    <p class="stat-card-value">{{ total_members }}</p>
                 </div>
                 <div class="stat-card-trend trend-up">
                     <i data-lucide="trending-up" size="14"></i>
@@ -121,7 +122,7 @@
                 </div>
                 <div class="stat-card-body">
                     <p class="stat-card-label">Actieve campagnes</p>
-                    <p class="stat-card-value">1</p>
+                    <p class="stat-card-value">{{ campaigns|length }}</p>
                 </div>
                 <div class="stat-card-trend trend-neutral">
                     <i data-lucide="minus" size="14"></i>
@@ -147,120 +148,71 @@
         <!-- Section header -->
         <div class="section-title-bar">
             <h2 class="section-title-text">Campagnes</h2>
-            <span class="section-badge">3 totaal</span>
+            <span class="section-badge">{{ campaigns|length }} totaal</span>
         </div>
 
         <!-- Campaign cards -->
         <div class="campaign-cards">
+            {% if message == 'campaign_created' %}
+                <div style="background-color: #dcfce7; color: #166534; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; width: 100%; grid-column: 1 / -1;">
+                    <i data-lucide="check-circle" size="18"></i>
+                    <span>Campagne succesvol aangemaakt! De e-mails worden verstuurd.</span>
+                </div>
+            {% endif %}
 
-            <!-- Campaign 1 - Active -->
-            <div class="campaign-card">
-                <div class="campaign-card-header">
-                    <div class="campaign-card-meta">
-                        <span class="status-pill pill-active">
-                            <span class="pill-dot"></span>
-                            Actief
+            {% for campaign in campaigns %}
+                <div class="campaign-card {% if campaign.status == 'draft' %}campaign-card-draft{% endif %}">
+                    <div class="campaign-card-header">
+                        <div class="campaign-card-meta">
+                            <span class="status-pill pill-{% if campaign.status == 'active' %}active{% elseif campaign.status == 'completed' %}completed{% else %}draft{% endif %}">
+                                <span class="pill-dot"></span>
+                                {{ (campaign.status == 'active' ? 'Actief' : (campaign.status == 'completed' ? 'Afgerond' : 'Concept')) }}
+                            </span>
+                            <span class="campaign-card-date">
+                                <i data-lucide="calendar" size="13"></i>
+                                Deadline: {{ campaign.end_date ? campaign.end_date|date('d-m-Y') : 'Geen' }}
+                            </span>
+                        </div>
+                        <div class="campaign-card-actions">
+                            <button class="icon-btn" title="Bewerken">
+                                <i data-lucide="pencil" size="15"></i>
+                            </button>
+                            <button class="icon-btn" title="Rapport">
+                                <i data-lucide="download" size="15"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <h3 class="campaign-card-title">{{ campaign.name }}</h3>
+                    <div class="campaign-card-progress">
+                        <div class="progress-row">
+                            <span class="progress-text">{{ campaign.responded_count }} van {{ campaign.total_members }} gereageerd</span>
+                            <span class="progress-pct">{{ campaign.response_pct }}%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill-bar fill-{% if campaign.status == 'active' %}active{% elseif campaign.status == 'completed' %}completed{% else %}draft{% endif %}" style="width: {{ campaign.response_pct }}%"></div>
+                        </div>
+                    </div>
+                    <div class="campaign-card-footer">
+                        <span class="footer-warning">
+                            <i data-lucide="alert-triangle" size="14"></i>
+                            {{ campaign.total_members - campaign.responded_count }} nog niet gereageerd
                         </span>
-                        <span class="campaign-card-date">
-                            <i data-lucide="calendar" size="13"></i>
-                            Deadline: 15 mrt 2025
-                        </span>
-                    </div>
-                    <div class="campaign-card-actions">
-                        <button class="icon-btn" title="Bewerken">
-                            <i data-lucide="pencil" size="15"></i>
-                        </button>
-                        <button class="icon-btn" title="Rapport">
-                            <i data-lucide="download" size="15"></i>
-                        </button>
+                        <a href="/dashboard" class="campaign-card-link">Bekijken <i data-lucide="arrow-right" size="14"></i></a>
                     </div>
                 </div>
-                <h3 class="campaign-card-title">Jaarlijkse toestemming 2025</h3>
-                <div class="campaign-card-progress">
-                    <div class="progress-row">
-                        <span class="progress-text">189 van 245 gereageerd</span>
-                        <span class="progress-pct">77%</span>
+            {% else %}
+                <div class="campaign-card" style="grid-column: 1 / -1; text-align: center; padding: 4rem; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; border: 2px dashed #e2e8f0;">
+                    <div style="margin-bottom: 1.5rem; background: #f8fafc; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                         <i data-lucide="inbox" size="40" style="color: #94a3b8;"></i>
                     </div>
-                    <div class="progress-track">
-                        <div class="progress-fill-bar fill-active" style="width: 77%"></div>
-                    </div>
+                    <h3 style="margin-bottom: 0.5rem; color: #1e293b; font-size: 1.25rem;">Geen campagnes gevonden</h3>
+                    <p style="color: #64748b; margin-bottom: 2rem; max-width: 400px;">U heeft nog geen campagnes aangemaakt. Begin met uw eerste campagne om toestemming te verzamelen.</p>
+                    <a href="/campagne/nieuw" class="btn btn-primary" style="display: inline-flex; width: auto; padding: 0.75rem 2rem; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="plus" size="20"></i>
+                        <span>Start uw eerste campagne</span>
+                    </a>
                 </div>
-                <div class="campaign-card-footer">
-                    <span class="footer-warning">
-                        <i data-lucide="alert-triangle" size="14"></i>
-                        56 nog niet gereageerd
-                    </span>
-                    <a href="#" class="campaign-card-link">Bekijken <i data-lucide="arrow-right" size="14"></i></a>
-                </div>
-            </div>
-
-            <!-- Campaign 2 - Completed -->
-            <div class="campaign-card">
-                <div class="campaign-card-header">
-                    <div class="campaign-card-meta">
-                        <span class="status-pill pill-completed">
-                            <span class="pill-dot"></span>
-                            Afgerond
-                        </span>
-                        <span class="campaign-card-date">
-                            <i data-lucide="calendar" size="13"></i>
-                            Deadline: 15 mrt 2024
-                        </span>
-                    </div>
-                    <div class="campaign-card-actions">
-                        <button class="icon-btn" title="Rapport downloaden">
-                            <i data-lucide="download" size="15"></i>
-                        </button>
-                    </div>
-                </div>
-                <h3 class="campaign-card-title">Nieuwsbrief Toestemming</h3>
-                <div class="campaign-card-progress">
-                    <div class="progress-row">
-                        <span class="progress-text">118 van 120 gereageerd</span>
-                        <span class="progress-pct">98%</span>
-                    </div>
-                    <div class="progress-track">
-                        <div class="progress-fill-bar fill-completed" style="width: 98%"></div>
-                    </div>
-                </div>
-                <div class="campaign-card-footer">
-                    <span class="footer-success">
-                        <i data-lucide="check-circle-2" size="14"></i>
-                        Campagne succesvol afgerond
-                    </span>
-                    <a href="#" class="campaign-card-link">Bekijken <i data-lucide="arrow-right" size="14"></i></a>
-                </div>
-            </div>
-
-            <!-- Campaign 3 - Draft -->
-            <div class="campaign-card campaign-card-draft">
-                <div class="campaign-card-header">
-                    <div class="campaign-card-meta">
-                        <span class="status-pill pill-draft">
-                            <span class="pill-dot"></span>
-                            Concept
-                        </span>
-                    </div>
-                    <div class="campaign-card-actions">
-                        <button class="icon-btn" title="Bewerken">
-                            <i data-lucide="pencil" size="15"></i>
-                        </button>
-                        <button class="icon-btn icon-btn-danger" title="Verwijderen">
-                            <i data-lucide="trash-2" size="15"></i>
-                        </button>
-                    </div>
-                </div>
-                <h3 class="campaign-card-title">Foto Toestemming Jeugd</h3>
-                <p class="campaign-card-draft-hint">
-                    <i data-lucide="info" size="14"></i>
-                    Campagne is nog niet gestart. Klik op bewerken om verder te gaan.
-                </p>
-                <div class="campaign-card-footer">
-                    <span></span>
-                    <a href="/campagne/nieuw" class="campaign-card-link">Afronden <i data-lucide="arrow-right" size="14"></i></a>
-                </div>
-            </div>
-
+            {% endfor %}
         </div>
     </div>
 </div>
