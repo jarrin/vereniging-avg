@@ -212,19 +212,31 @@ if ($path === '/' || $path === '/index.php') {
         $data = $_SESSION['new_campaign'] ?? [];
         $data = array_merge($data, $_POST);
         
-        // 1. Create Campaign
+        // 1. Create OR Update Campaign
         require_once __DIR__ . '/../models/Campaign.php';
-        $res = Campaign::create(
-            $_SESSION['user_id'], 
-            $data['org_name'] ?? 'Nieuwe Campagne',
-            $data['reply_to_email'] ?? '',
-            $data['email_subject'] ?? '',
-            $data['email_body'] ?? ''
-        );
+        
+        $editing_id = $data['editing_id'] ?? null;
+        if ($editing_id) {
+            $campaignId = $editing_id;
+            $res = ['success' => true, 'id' => $campaignId];
+            // No need to "create", we'll just update below
+        } else {
+            $res = Campaign::create(
+                $_SESSION['user_id'], 
+                $data['org_name'] ?? 'Nieuwe Campagne',
+                $data['reply_to_email'] ?? '',
+                $data['email_subject'] ?? '',
+                $data['email_body'] ?? ''
+            );
+        }
         
         if ($res['success']) {
             $campaignId = $res['id'];
             $campaign = Campaign::findById($campaignId);
+            $campaign->name = $data['org_name'] ?? $campaign->name;
+            $campaign->reply_to_email = $data['reply_to_email'] ?? $campaign->reply_to_email;
+            $campaign->email_subject = $data['email_subject'] ?? $campaign->email_subject;
+            $campaign->email_body = $data['email_body'] ?? $campaign->email_body;
             $campaign->end_date = $data['end_date'] ?? null;
             $campaign->reminder_subject = $data['reminder_subject'] ?? '';
             $campaign->reminder_body = $data['email_signature'] ?? ''; 
@@ -237,8 +249,11 @@ if ($path === '/' || $path === '/index.php') {
             $campaign->status = 'active'; 
             $campaign->update();
             
-            // 2. Add Questions
+            // 2. Add Questions (Clear first if editing)
             $pdo = Database::getConnection();
+            if ($editing_id) {
+                $pdo->prepare('DELETE FROM questions WHERE campaign_id = ?')->execute([$campaignId]);
+            }
             $questions = $data['questions'] ?? [];
             foreach ($questions as $index => $qText) {
                 if (trim($qText) === '') continue;
@@ -292,6 +307,98 @@ if ($path === '/' || $path === '/index.php') {
     echo $twig->render('nieuwe_campagne/ledenlijst.twig', [
         'title' => 'Ledenlijst - AVG Verenigingen',
     ]);
+} elseif (preg_match('/^\/campagne\/view\/(.+)$/', $path, $matches)) {
+    if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
+    require_once __DIR__ . '/../models/Campaign.php';
+    require_once __DIR__ . '/../models/Person.php';
+    $campaignId = $matches[1];
+    $campaign = Campaign::findById($campaignId);
+    if (!$campaign || $campaign->user_id !== $_SESSION['user_id']) { die("Campagne niet gevonden."); }
+    
+    $pdo = Database::getConnection();
+    // Get questions
+    $stmtQ = $pdo->prepare('SELECT * FROM questions WHERE campaign_id = ? ORDER BY sort_order ASC');
+    $stmtQ->execute([$campaignId]);
+    $questions = $stmtQ->fetchAll();
+    
+    // Get persons
+    $persons = Person::getAllByCampaign($campaignId);
+    
+    echo $twig->render('campaign_view.twig', [
+        'title' => 'Campagne Details - ' . $campaign->name,
+        'campaign' => $campaign,
+        'questions' => $questions,
+        'persons' => $persons
+    ]);
+} elseif (preg_match('/^\/campagne\/edit\/(.+)$/', $path, $matches)) {
+    if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
+    require_once __DIR__ . '/../models/Campaign.php';
+    $campaignId = $matches[1];
+    $campaign = Campaign::findById($campaignId);
+    if (!$campaign || $campaign->user_id !== $_SESSION['user_id']) { die("Campagne niet gevonden."); }
+    
+    // Fill session with current data to "edit" using the same wizard
+    $_SESSION['new_campaign'] = [
+        'org_name' => $campaign->name,
+        'reply_to_email' => $campaign->reply_to_email,
+        'email_subject' => $campaign->email_subject,
+        'email_body' => $campaign->email_body,
+        'reminder_subject' => $campaign->reminder_subject,
+        'email_signature' => $campaign->reminder_body,
+        'action_no_response' => $campaign->non_response_action === 'send_reminder' ? 'reminder' : 'no_action',
+        'reminder_days' => $campaign->reminder_days,
+        'end_date' => $campaign->end_date,
+        'editing_id' => $campaign->id
+    ];
+    
+    // Add questions to session
+    $pdo = Database::getConnection();
+    $stmtQ = $pdo->prepare('SELECT question_text FROM questions WHERE campaign_id = ? ORDER BY sort_order ASC');
+    $stmtQ->execute([$campaignId]);
+    $_SESSION['new_campaign']['questions'] = $stmtQ->fetchAll(PDO::FETCH_COLUMN);
+    
+    header('Location: /campagne/form/verenigingsgegevens');
+    exit;
+} elseif (preg_match('/^\/campagne\/report\/(.+)$/', $path, $matches)) {
+    if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
+    require_once __DIR__ . '/../models/Campaign.php';
+    $campaignId = $matches[1];
+    $campaign = Campaign::findById($campaignId);
+    if (!$campaign || $campaign->user_id !== $_SESSION['user_id']) { die("Campagne niet gevonden."); }
+    
+    $pdo = Database::getConnection();
+    // Get questions
+    $stmtQ = $pdo->prepare('SELECT id, question_text FROM questions WHERE campaign_id = ? ORDER BY sort_order ASC');
+    $stmtQ->execute([$campaignId]);
+    $questions = $stmtQ->fetchAll();
+    
+    // Get responses
+    $stmtP = $pdo->prepare('SELECT * FROM persons WHERE campaign_id = ?');
+    $stmtP->execute([$campaignId]);
+    $persons = $stmtP->fetchAll();
+    
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename="rapport_' . strtolower(str_replace(' ', '_', $campaign->name)) . '.csv"');
+    
+    $output = fopen('php://output', 'w');
+    
+    // Header
+    $header = ['Naam', 'E-mail', 'Status', 'Gereageerd op'];
+    foreach ($questions as $q) { $header[] = $q['question_text']; }
+    fputcsv($output, $header);
+    
+    foreach ($persons as $person) {
+        $row = [$person['name'], $person['email'], $person['email_status'], $person['responded_at']];
+        foreach ($questions as $q) {
+            $stmtA = $pdo->prepare('SELECT answer FROM answers WHERE person_id = ? AND question_id = ?');
+            $stmtA->execute([$person['id'], $q['id']]);
+            $ans = $stmtA->fetch();
+            $row[] = $ans ? ($ans['answer'] ? 'Ja' : 'Nee') : '-';
+        }
+        fputcsv($output, $row);
+    }
+    fclose($output);
+    exit;
 } elseif ($path === '/instellingen') {
     if (!$isLoggedIn) {
         header('Location: /index.php?action=login');

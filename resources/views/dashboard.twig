@@ -174,12 +174,12 @@
                             </span>
                         </div>
                         <div class="campaign-card-actions">
-                            <button class="icon-btn" title="Bewerken">
+                            <a href="/campagne/edit/{{ campaign.id }}" class="icon-btn" title="Bewerken">
                                 <i data-lucide="pencil" size="15"></i>
-                            </button>
-                            <button class="icon-btn" title="Rapport">
+                            </a>
+                            <a href="/campagne/report/{{ campaign.id }}" class="icon-btn" title="Rapport">
                                 <i data-lucide="download" size="15"></i>
-                            </button>
+                            </a>
                         </div>
                     </div>
                     <h3 class="campaign-card-title">{{ campaign.name }}</h3>
@@ -197,7 +197,7 @@
                             <i data-lucide="alert-triangle" size="14"></i>
                             {{ campaign.total_members - campaign.responded_count }} nog niet gereageerd
                         </span>
-                        <a href="/dashboard" class="campaign-card-link">Bekijken <i data-lucide="arrow-right" size="14"></i></a>
+                        <a href="/campagne/view/{{ campaign.id }}" class="campaign-card-link">Bekijken <i data-lucide="arrow-right" size="14"></i></a>
                     </div>
                 </div>
             {% else %}
