@@ -12,6 +12,7 @@ CREATE TABLE users (
     username VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
+    logo_path VARCHAR(255) NULL,
     is_active BOOLEAN DEFAULT TRUE,
     last_login TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -40,6 +41,7 @@ CREATE TABLE campaigns (
 ) ENGINE=InnoDB;
 
 -- Migratie voor bestaande databases:
+-- ALTER TABLE users ADD COLUMN logo_path VARCHAR(255) NULL AFTER email;
 -- ALTER TABLE campaigns ADD COLUMN reply_to_email VARCHAR(255) NULL AFTER name;
 -- ALTER TABLE campaigns ADD COLUMN reminder_subject VARCHAR(255) NULL AFTER email_body;
 -- ALTER TABLE campaigns ADD COLUMN reminder_body TEXT NULL AFTER reminder_subject;

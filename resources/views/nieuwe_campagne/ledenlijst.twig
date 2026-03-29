@@ -36,6 +36,7 @@
 						</div>
 					</div>
 
+					<form action="/campagne/form/ledenlijst" method="POST" enctype="multipart/form-data">
 					<div class="campaign-form-wrapper">
 						<div class="campaign-form-header">
 							<i data-lucide="users" class="campaign-form-icon"></i>
@@ -74,8 +75,9 @@
 							<label for="member-list" class="campaign-form-label">Ledenbestand *</label>
 							<label for="member-list" class="campaign-upload-area">
 								<input type="file" id="member-list" name="member_list" accept=".csv,.xlsx,.xls" style="display: none;">
-								<i data-lucide="upload" size="40"></i>
-								<span class="upload-text">Klick om een Excel of CSV bestand te uploaden</span>
+								<i data-lucide="upload" size="40" id="upload-icon"></i>
+								<span class="upload-text" id="upload-text">Klik om een Excel of CSV bestand te uploaden</span>
+								<span id="selected-file-name" style="display: none; font-weight: 600; color: var(--primary); margin-top: 5px;"></span>
 							</label>
 						</div>
 
@@ -91,28 +93,75 @@
 						</div>
 					</div>
 
-					<div class="campaign-form-navigation">
-						<a href="/campagne/form/email-tekst" class="campaign-btn-nav campaign-btn-nav-prev">
-							<i data-lucide="arrow-left" size="24"></i>
-							<span>Vorige</span>
-						</a>
-						<a href="#" class="campaign-btn-nav campaign-btn-nav-next campaign-btn-nav-next-foggy">
-							<span>Campagne Aanmaken</span>
-						</a>
-					</div>
+						<div class="campaign-form-navigation">
+							<a href="/campagne/form/email-tekst" class="campaign-btn-nav campaign-btn-nav-prev">
+								<i data-lucide="arrow-left" size="24"></i>
+								<span>Vorige</span>
+							</a>
+							<button type="submit" class="campaign-btn-nav campaign-btn-nav-next campaign-btn-nav-next-foggy" id="submit-campaign-btn" disabled style="border: none; cursor: default;">
+								<span>Campagne Aanmaken</span>
+							</button>
+						</div>
+					</form>
 				</div>
 			</div>
 		</div>
 	</div>
 
+{% endblock %}
+
+{% block scripts %}
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
+			// Handle File Upload display
+			const memberListInput = document.getElementById('member-list');
+			const uploadText = document.getElementById('upload-text');
+			const selectedFileName = document.getElementById('selected-file-name');
+			const uploadIcon = document.getElementById('upload-icon');
+			const submitBtn = document.getElementById('submit-campaign-btn');
 			const dateInput = document.getElementById('end-date');
-			const datePickerBtn = document.getElementById('date-picker-btn');
-			const calendarPopup = document.getElementById('calendar-popup');
-			const calendarMonth = document.getElementById('calendar-month');
-			const calendarYear = document.getElementById('calendar-year');
-			const calendarDaysContainer = document.getElementById('calendar-days-container');
+
+			function checkFormReady() {
+				const hasFile = memberListInput.files.length > 0;
+				const hasDate = dateInput.value.trim() !== '';
+				
+				if (hasFile && hasDate) {
+					submitBtn.disabled = false;
+					submitBtn.classList.remove('campaign-btn-nav-next-foggy');
+					submitBtn.style.cursor = 'pointer';
+				} else {
+					submitBtn.disabled = true;
+					submitBtn.classList.add('campaign-btn-nav-next-foggy');
+					submitBtn.style.cursor = 'default';
+				}
+			}
+
+			memberListInput.addEventListener('change', function(e) {
+				const file = e.target.files[0];
+				if (file) {
+					const validTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+					const validExtensions = ['.csv', '.xls', '.xlsx'];
+					const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+					
+					if (validTypes.includes(file.type) || validExtensions.includes(fileExtension)) {
+						uploadText.style.display = 'none';
+						uploadIcon.setAttribute('data-lucide', 'file-spreadsheet');
+						uploadIcon.style.color = 'var(--primary)';
+						lucide.createIcons();
+						selectedFileName.textContent = file.name + ' geselecteerd';
+						selectedFileName.style.display = 'block';
+					} else {
+						alert('Kies een geldig .csv of .xlsx bestand a.u.b.');
+						memberListInput.value = '';
+						selectedFileName.style.display = 'none';
+						uploadText.style.display = 'block';
+					}
+				}
+				checkFormReady();
+			});
+
+			dateInput.addEventListener('input', checkFormReady);
+			dateInput.addEventListener('change', checkFormReady);
 
 			if (!dateInput) return;
 

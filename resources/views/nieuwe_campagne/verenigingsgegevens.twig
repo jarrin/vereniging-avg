@@ -30,6 +30,7 @@
 						</div>
 					</div>
 
+					<form action="/campagne/form/verenigingsgegevens" method="POST" enctype="multipart/form-data">
 					<div class="campaign-form-wrapper">
 						<div class="campaign-form-header">
 							<i data-lucide="building-2" class="campaign-form-icon"></i>
@@ -47,6 +48,7 @@
 								name="org_name" 
 								class="campaign-form-input" 
 								placeholder="Sport vereniging De Eendracht"
+								value="{{ session.new_campaign.org_name|default('') }}"
 								required
 							>
 						</div>
@@ -59,6 +61,7 @@
 								name="contact_person" 
 								class="campaign-form-input" 
 								placeholder="Van de Vries"
+								value="{{ session.new_campaign.contact_person|default('') }}"
 								required
 							>
 						</div>
@@ -71,8 +74,10 @@
 								name="email" 
 								class="campaign-form-input" 
 								placeholder="secretaris@vereniging.nl"
+								value="{{ session.new_campaign.email|default('') }}"
 								required
 							>
+							<span id="email-error" class="form-error-msg" style="display: none; color: #ef4444; font-size: 0.8rem; margin-top: 5px;">Voer een geldig e-mailadres in a.u.b.</span>
 						</div>
 
 						<div class="campaign-form-group">
@@ -88,7 +93,7 @@
 
 						<div class="campaign-form-group-toggle">
 							<label class="campaign-toggle-switch">
-								<input type="checkbox" class="campaign-toggle-input">
+								<input type="checkbox" name="show_phone" class="campaign-toggle-input" {{ session.new_campaign.show_phone ? 'checked' : '' }}>
 								<span class="campaign-toggle-slider"></span>
 							</label>
 							<span class="campaign-toggle-label">Telefoonnummer tonen in e-mails</span>
@@ -96,26 +101,115 @@
 
 						<div class="campaign-form-group">
 							<label class="campaign-form-label">Logo (.jpg max 2MB, bij voorkeur 200x200px)</label>
-							<label class="campaign-upload-button">
-								<input type="file" accept=".jpg,.jpeg" style="display: none;">
-								<i data-lucide="upload" size="20"></i>
-								<span>Upload Logo</span>
-							</label>
+							<div class="logo-upload-wrapper">
+								<label class="campaign-upload-button">
+									<input type="file" id="logo-upload-input" name="logo" accept=".jpg,.jpeg,.png" style="display: none;">
+									<i data-lucide="upload" size="20"></i>
+									<span>Kies Logo</span>
+								</label>
+								<div class="logo-preview-container" id="logo-preview-container" style="{{ session.new_campaign.logo_path ? 'display: block;' : 'display: none;' }}">
+									<img id="logo-preview-image" src="{{ session.new_campaign.logo_path|default('') }}" alt="Logo preview">
+									<button type="button" class="logo-remove-btn" id="logo-remove-btn" aria-label="Verwijder logo">
+										<i data-lucide="x" size="16"></i>
+									</button>
+								</div>
+								{% if session.new_campaign.logo_path %}
+									<input type="hidden" name="existing_logo" value="{{ session.new_campaign.logo_path }}">
+								{% endif %}
+							</div>
 						</div>
 					</div>
 
-					<div class="campaign-form-navigation">
-					<a href="#" class="campaign-btn-nav campaign-btn-nav-prev" style="cursor: not-allowed; opacity: 0.5;">
-						<i data-lucide="arrow-left" size="24"></i>
-						<span>Vorige</span>
-					</a>
-				<a href="/campagne/form/vragen" class="campaign-btn-nav campaign-btn-nav-next campaign-btn-nav-next-foggy">
-						<span>Volgende</span>
-						<i data-lucide="arrow-right" size="24"></i>
-					</a>
-					</div>
+						<div class="campaign-form-navigation">
+							<a href="/dashboard" class="campaign-btn-nav campaign-btn-nav-prev">
+								<i data-lucide="arrow-left" size="24"></i>
+								<span>Annuleren</span>
+							</a>
+							<button type="submit" id="next-btn" class="campaign-btn-nav campaign-btn-nav-next campaign-btn-nav-next-foggy" style="pointer-events: none; border: none; cursor: default;">
+								<span>Volgende</span>
+								<i data-lucide="arrow-right" size="24"></i>
+							</button>
+						</div>
+					</form>
 				</div>
 			</div>
 		</div>
 	</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('logo-upload-input');
+    const previewContainer = document.getElementById('logo-preview-container');
+    const previewImage = document.getElementById('logo-preview-image');
+    const removeBtn = document.getElementById('logo-remove-btn');
+    const uploadLabel = document.querySelector('.campaign-upload-button');
+    const nextBtn = document.getElementById('next-btn');
+    
+    // Required fields check
+    const orgName = document.getElementById('org-name');
+    const contactPerson = document.getElementById('contact-person');
+    const emailField = document.getElementById('email');
+    const emailError = document.getElementById('email-error');
+
+    function checkRequiredFields() {
+        const isEmailValid = emailField.value.trim() !== '' && emailField.validity.valid;
+        const allFilled = orgName.value.trim() !== '' && contactPerson.value.trim() !== '' && emailField.value.trim() !== '';
+
+        if (allFilled && isEmailValid) {
+            nextBtn.classList.remove('campaign-btn-nav-next-foggy');
+            nextBtn.style.pointerEvents = 'auto';
+            nextBtn.style.cursor = 'pointer';
+        } else {
+            nextBtn.classList.add('campaign-btn-nav-next-foggy');
+            nextBtn.style.pointerEvents = 'none';
+            nextBtn.style.cursor = 'default';
+        }
+
+        // Show/hide error message if user has started typing and isn't valid
+        if (emailField.value.trim() !== '' && !emailField.validity.valid) {
+            emailError.style.display = 'block';
+            emailField.style.borderColor = '#ef4444';
+        } else {
+            emailError.style.display = 'none';
+            emailField.style.borderColor = '';
+        }
+    }
+
+    [orgName, contactPerson, emailField].forEach(input => {
+        input.addEventListener('input', checkRequiredFields);
+    });
+    checkRequiredFields(); // initial check
+
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        
+        if (file) {
+            // Check file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Het geselecteerde bestand is groter dan 2MB. Kies een kleiner bestand.');
+                fileInput.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                previewContainer.style.display = 'block';
+                // Hide the upload button since we have a preview
+                uploadLabel.style.display = 'none';
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    removeBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        previewImage.src = '';
+        previewContainer.style.display = 'none';
+        uploadLabel.style.display = 'flex'; // show the upload button again
+    });
+});
+</script>
 {% endblock %}

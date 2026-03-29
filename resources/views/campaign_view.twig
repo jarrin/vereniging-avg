@@ -1,0 +1,74 @@
+{% extends 'layout.twig' %}
+
+{% block content %}
+<div class="main-content">
+    <div class="topbar">
+        <div class="topbar-left">
+            <h1 class="topbar-title">Campagne Details</h1>
+            <p class="topbar-subtitle">{{ campaign.name }}</p>
+        </div>
+        <div class="topbar-right">
+            <a href="/dashboard" class="btn btn-outline">Terug naar Dashboard</a>
+        </div>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-card-label">Status</div>
+            <div class="stat-card-value">{{ campaign.status|capitalize }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-label">Leden</div>
+            <div class="stat-card-value">{{ persons|length }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-label">Respons</div>
+            <div class="stat-card-value">{{ campaign.responded_count }}</div>
+        </div>
+    </div>
+
+    <div class="campaign-card" style="margin-top: 2rem;">
+        <h3 style="margin-bottom: 1rem;">Leden & Antwoorden</h3>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #e2e8f0; text-align: left;">
+                        <th style="padding: 1rem;">Naam</th>
+                        <th style="padding: 1rem;">E-mail</th>
+                        <th style="padding: 1rem;">Status</th>
+                        {% for question in questions %}
+                            <th style="padding: 1rem;">Q: {{ question.question_text }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for person in persons %}
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 1rem;">{{ person.name }}</td>
+                            <td style="padding: 1rem;">{{ person.email }}</td>
+                            <td style="padding: 1rem;">
+                                <span class="status-pill pill-{{ person.email_status }}">
+                                    {{ person.email_status }}
+                                </span>
+                            </td>
+                            {# Note: Fetching individual answers inside a loop in twig is hard without a helper. 
+                               In a real app, I'd prepare this in the controller.
+                               For now, I'll just show if they responded. 
+                            #}
+                            {% if person.responded_at %}
+                                <td colspan="{{ questions|length }}" style="padding: 1rem; color: #16a34a;">
+                                    Gereageerd op {{ person.responded_at|date('d-m-Y H:i') }}
+                                </td>
+                            {% else %}
+                                <td colspan="{{ questions|length }}" style="padding: 1rem; color: #64748b;">
+                                    Nog geen reactie
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1156,6 +1156,7 @@ section {
   font-weight: 800;
   color: var(--white);
   border-bottom: 1px solid rgba(255,255,255,0.08);
+  text-decoration: none;
 }
 
 .sidebar-brand i {
@@ -1639,6 +1640,69 @@ section {
   margin: 0;
 }
 
+/* Logo Upload Preview */
+.logo-upload-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.logo-preview-container {
+  position: relative;
+  width: auto;
+  min-width: 160px;
+  max-width: 240px;
+  height: 160px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background-color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: 8px; /* padding so logo doesn't touch the border */
+  margin-top: 0.5rem;
+  transition: 0.2s;
+}
+
+.logo-preview-container:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.1);
+}
+
+#logo-preview-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.logo-remove-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.logo-remove-btn:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fca5a5;
+  transform: scale(1.05);
+}
+
 /* ---- Navbar hidden on dashboard (sidebar replaces it) ---- */
 .app-shell ~ footer,
 .app-shell + footer {
@@ -1825,6 +1889,8 @@ section {
   gap: 10px;
   font-weight: 800;
   font-size: 1.05rem;
+  text-decoration: none;
+  color: inherit;
 }
 
 .mobile-topbar-brand i {

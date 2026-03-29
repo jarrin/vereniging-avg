@@ -34,7 +34,8 @@
 						</div>
 					</div>
 
-					<div class="campaign-form-wrapper">
+					<form action="/campagne/form/email-tekst" method="POST">
+						<div class="campaign-form-wrapper">
 						<div class="campaign-form-header">
 							<i data-lucide="mail" class="campaign-form-icon"></i>
 							<div class="campaign-form-header-text">
@@ -72,14 +73,16 @@
 
 						<div class="campaign-form-group">
 					<label for="reply-to-email" class="campaign-form-label">Reply-To e-mailadres vereniging *</label>
-					<input 
-						type="email" 
-						id="reply-to-email" 
-						name="reply_to_email" 
-						class="campaign-form-input" 
-						placeholder="secretaris@vereniging.nl"
-						required
-					>
+								<input 
+									type="email" 
+									id="reply-to-email" 
+									name="reply_to_email" 
+									class="campaign-form-input" 
+									placeholder="secretaris@vereniging.nl"
+									value="{{ session.new_campaign.reply_to_email|default('') }}"
+									required
+								>
+					<span id="email-error" class="form-error-msg" style="display: none; color: #ef4444; font-size: 0.8rem; margin-top: 5px;">Voer een geldig e-mailadres in a.u.b.</span>
 					<p class="campaign-form-hint">Reacties van leden worden naar dit adres gestuurd.</p>
 				</div>
 
@@ -91,6 +94,7 @@
 								name="email_subject" 
 								class="campaign-form-input" 
 								placeholder="Uw jaarlijkse toestemming - {verenigingsnaam}"
+								value="{{ session.new_campaign.email_subject|default('') }}"
 								required
 							>
 						</div>
@@ -101,25 +105,18 @@
 								id="email-body" 
 								name="email_body" 
 								class="campaign-form-input" 
-								placeholder="Beste {naam},
-
-Zoals ieder jaar vragen wij u om uw toestemming te bevestigen voor het gebruik van uw gegevens door {verenigingsnaam}.
-
-Klick op de onderstaande link om de vragen te beantworden. Dit duurt slechts een minuut.
-
-{link}"
+								placeholder="Beste {naam}, ..."
 								rows="8"
 								required
-							></textarea>
+							>{{ session.new_campaign.email_body|default('') }}</textarea>
 						</div>
 
 						<div class="campaign-form-group">
 							<label for="action-no-response" class="campaign-form-label">Actie bij geen reactie</label>
 							<div class="campaign-dropdown-wrapper">
 								<select id="action-no-response" name="action_no_response" class="campaign-form-dropdown">
-									<option value="">Kies een actie...</option>
-								<option value="reminder">Herinnering sturen</option>
-									<option value="no-action">Geen actie</option>
+									<option value="no_action" {{ session.new_campaign.action_no_response == 'no_action' ? 'selected' : '' }}>Geen actie</option>
+									<option value="reminder" {{ session.new_campaign.action_no_response == 'reminder' ? 'selected' : '' }}>Herinnering sturen</option>
 								</select>
 								<i data-lucide="chevron-down" class="dropdown-icon"></i>
 							</div>
@@ -133,6 +130,7 @@ Klick op de onderstaande link om de vragen te beantworden. Dit duurt slechts een
 								name="reminder_subject" 
 								class="campaign-form-input" 
 								placeholder="Herinnering: Toestemming bevestigen - {verenigingsnaam}"
+								value="{{ session.new_campaign.reminder_subject|default('') }}"
 							>
 						</div>
 
@@ -142,13 +140,9 @@ Klick op de onderstaande link om de vragen te beantworden. Dit duurt slechts een
 								id="email-signature" 
 								name="email_signature" 
 								class="campaign-form-input" 
-								placeholder="Beste {naam},
-
-U heeft nog niet gereageerd op ons verzoek om toestemming. Wij willen u vriendelijk herinneren om de vragen te beantwoorden.
-
-{link}"
+								placeholder="Beste {naam}, ..."
 								rows="7"
-							></textarea>
+							>{{ session.new_campaign.email_signature|default('') }}</textarea>
 						</div>
 
 						<div class="campaign-form-group">
@@ -164,16 +158,17 @@ U heeft nog niet gereageerd op ons verzoek om toestemming. Wij willen u vriendel
 						</div>
 					</div>
 
-					<div class="campaign-form-navigation">
-						<a href="/campagne/form/vragen" class="campaign-btn-nav campaign-btn-nav-prev">
-							<i data-lucide="arrow-left" size="24"></i>
-							<span>Vorige</span>
-						</a>
-						<a href="/campagne/form/ledenlijst" class="campaign-btn-nav campaign-btn-nav-next">
-							<span>Volgende</span>
-							<i data-lucide="arrow-right" size="24"></i>
-						</a>
-					</div>
+						<div class="campaign-form-navigation">
+							<a href="/campagne/form/vragen" class="campaign-btn-nav campaign-btn-nav-prev">
+								<i data-lucide="arrow-left" size="24"></i>
+								<span>Vorige</span>
+							</a>
+							<button type="submit" id="next-btn" class="campaign-btn-nav campaign-btn-nav-next campaign-btn-nav-next-foggy" style="pointer-events: none; border: none; cursor: default;">
+								<span>Volgende</span>
+								<i data-lucide="arrow-right" size="24"></i>
+							</button>
+						</div>
+					</form>
 				</div>
 			</div>
 		</div>
@@ -304,6 +299,47 @@ Met vriendelijke groet,
 		document.getElementById('email-body').value = data.body;
 		document.getElementById('reminder-subject').value = data.herinnering_subject;
 		document.getElementById('email-signature').value = data.herinnering;
+		
+		checkRequiredFields(); // Re-validate after loading template
 	}
+
+	// Dynamic validation
+	const nextBtn = document.getElementById('next-btn');
+	const replyTo = document.getElementById('reply-to-email');
+	const emailError = document.getElementById('email-error');
+	const subject = document.getElementById('email-subject');
+	const body = document.getElementById('email-body');
+
+	function checkRequiredFields() {
+		const isReplyValid = replyTo.value.trim() !== '' && replyTo.validity.valid;
+		const isSubjectValid = subject.value.trim() !== '';
+		const isBodyValid = body.value.trim() !== '';
+
+		if (isReplyValid && isSubjectValid && isBodyValid) {
+			nextBtn.classList.remove('campaign-btn-nav-next-foggy');
+			nextBtn.style.pointerEvents = 'auto';
+			nextBtn.style.cursor = 'pointer';
+		} else {
+			nextBtn.classList.add('campaign-btn-nav-next-foggy');
+			nextBtn.style.pointerEvents = 'none';
+			nextBtn.style.cursor = 'default';
+		}
+
+		// Validation message
+		if (replyTo.value.trim() !== '' && !replyTo.validity.valid) {
+			emailError.style.display = 'block';
+			replyTo.style.borderColor = '#ef4444';
+		} else {
+			emailError.style.display = 'none';
+			replyTo.style.borderColor = '';
+		}
+	}
+
+	[replyTo, subject, body].forEach(input => {
+		input.addEventListener('input', checkRequiredFields);
+	});
+	
+	// Also check when template is loaded or on page load
+	document.addEventListener('DOMContentLoaded', checkRequiredFields);
 </script>
 {% endblock %}

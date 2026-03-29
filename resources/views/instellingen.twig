@@ -23,50 +23,8 @@
 <div class="app-shell">
 
     <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <i data-lucide="shield-check"></i>
-            <span>AVG Verenigingen</span>
-            <!-- Close button, only visible on mobile -->
-            <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Menu sluiten">
-                <i data-lucide="x"></i>
-            </button>
-        </div>
+    {% include 'includes/sidebar.twig' with {'active_page': 'settings'} %}
 
-        <nav class="sidebar-nav">
-            <a href="/dashboard" class="sidebar-link">
-                <i data-lucide="layout-dashboard"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="/campagne/nieuw" class="sidebar-link">
-                <i data-lucide="plus-circle"></i>
-                <span>Nieuwe campagne</span>
-            </a>
-            <a href="#" class="sidebar-link">
-                <i data-lucide="bar-chart-2"></i>
-                <span>Rapportages</span>
-            </a>
-            <a href="/instellingen" class="sidebar-link active">
-                <i data-lucide="settings"></i>
-                <span>Instellingen</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <div class="sidebar-user">
-                <div class="sidebar-avatar">
-                    <i data-lucide="user"></i>
-                </div>
-                <div class="sidebar-user-info">
-                    <p class="sidebar-user-name">Secretaris</p>
-                    <p class="sidebar-user-email">{{ user.email|default('vereniging@avg.nl') }}</p>
-                </div>
-            </div>
-            <a href="/logout" class="sidebar-logout" title="Uitloggen">
-                <i data-lucide="log-out"></i>
-            </a>
-        </div>
-    </aside>
 
     <!-- Main content -->
     <div class="main-content">
