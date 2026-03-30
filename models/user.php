@@ -153,11 +153,11 @@ class User
 
         $pdo = Database::getConnection();
         $password_hash = password_hash($password, PASSWORD_DEFAULT);
-        $id = uniqid('', true); // Generate unique ID for UUID-like string
 
-        $stmt = $pdo->prepare('INSERT INTO users (id, username, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())');
+        $stmt = $pdo->prepare('INSERT INTO users (username, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())');
         try {
-            $stmt->execute([$id, $username, $email, $password_hash]);
+            $stmt->execute([$username, $email, $password_hash]);
+            $id = $pdo->lastInsertId(); // Get the auto-generated ID
             return ['success' => true, 'id' => $id, 'message' => 'Gebruiker geregistreerd.'];
         } catch (\PDOException $e) {
             return ['success' => false, 'id' => null, 'message' => 'Database fout: ' . $e->getMessage()];

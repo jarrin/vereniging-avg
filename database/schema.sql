@@ -8,10 +8,11 @@ USE vereniging_avg;
 -- In een productieomgeving met miljoenen records zou BINARY(16) sneller zijn
 
 CREATE TABLE users (
-    id CHAR(36) PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(20) NULL,
     logo_path VARCHAR(255) NULL,
     is_active BOOLEAN DEFAULT TRUE,
     last_login TIMESTAMP NULL,
@@ -21,7 +22,7 @@ CREATE TABLE users (
 
 CREATE TABLE campaigns (
     id CHAR(36) PRIMARY KEY,
-    user_id CHAR(36) NOT NULL,
+    user_id INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     reply_to_email VARCHAR(255) NULL,
     email_subject VARCHAR(255) NOT NULL,
@@ -97,7 +98,7 @@ CREATE TABLE reports (
     file_path VARCHAR(255) NOT NULL,
     generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     downloaded_at TIMESTAMP NULL,
-    downloaded_by CHAR(36),
+    downloaded_by INT,
     sent_via_email BOOLEAN DEFAULT FALSE,
     deleted_at TIMESTAMP NULL,
     FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE,
@@ -111,7 +112,7 @@ CREATE TABLE file_uploads (
     file_path VARCHAR(255) NOT NULL,
     file_type ENUM('csv', 'xlsx') NOT NULL,
     record_count INTEGER NOT NULL,
-    uploaded_by CHAR(36) NOT NULL,
+    uploaded_by INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE,
     FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE RESTRICT
