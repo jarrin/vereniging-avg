@@ -97,5 +97,12 @@
 		</script>
 
 		{% block scripts %}{% endblock %}
+
+		<!-- Pseudo-Cron trigger: Achtergrondtaken zonder bash server toegang! -->
+		<script>
+			setTimeout(() => {
+				fetch('/run-cron?secret=avg_secret_123').catch(e => console.log('Cron err', e));
+			}, 3000); // 3 seconden vertraging
+		</script>
 	</body>
 </html>

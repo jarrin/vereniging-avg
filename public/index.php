@@ -42,6 +42,31 @@ if ($path === '/logout') {
     exit;
 }
 
+// Pseudo-cron (Web Cron) - Runs background tasks without needing server bash/crontab
+if ($path === '/run-cron') {
+    // A simple secret to prevent external abuse (hardcoded for simplicity, can be in .env)
+    $secret = $_GET['secret'] ?? '';
+    if ($secret !== 'avg_secret_123') {
+        die(json_encode(['success' => false, 'error' => 'Invalid secret']));
+    }
+    
+    // Run the cron scripts
+    // Gebruik output buffering om te voorkomen dat hun printjes de JSON stukmaken
+    ob_start();
+    try {
+        require_once __DIR__ . '/../cron/process_email_queue.php';
+        require_once __DIR__ . '/../cron/generate_reports.php';
+        require_once __DIR__ . '/../cron/auto_delete.php';
+    } catch (\Throwable $e) {
+        error_log("Web-cron fout: " . $e->getMessage());
+    }
+    $cronOutput = ob_get_clean();
+    
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'output' => $cronOutput]);
+    exit;
+}
+
 // Public pages (no login required)
 if ($action === 'login') {
     // Handle POST request for login
@@ -480,6 +505,11 @@ if ($path === '/' || $path === '/index.php') {
             // Update downloaded_at
             $pdo->prepare('UPDATE reports SET downloaded_at = NOW(), downloaded_by = ? WHERE file_path = ?')
                 ->execute([$_SESSION['user_id'], $report['file_path']]);
+                
+            // Plan de automatische verwijdering van AVG-data (als het nog niet gepland is)
+            // We geven de gebruiker nog 24 uur om het eventueel opnieuw te downloaden
+            $pdo->prepare('UPDATE campaigns SET auto_delete_at = DATE_ADD(NOW(), INTERVAL 24 HOUR) WHERE id = ? AND auto_delete_at IS NULL')
+                ->execute([$campaignId]);
                 
             header('Content-Type: text/csv');
             header('Content-Disposition: attachment; filename="' . basename($fullPath) . '"');
