@@ -116,6 +116,87 @@ if ($action === 'login') {
         'post' => $_POST,
     ]);
     exit;
+} elseif ($path === '/vragenlijst') {
+    // Public questionnaire responsive page
+    $token = $_GET['token'] ?? null;
+    require_once __DIR__ . '/../models/Person.php';
+    require_once __DIR__ . '/../models/Campaign.php';
+    
+    $person = null;
+    if ($token === 'preview') {
+        // Dummy data for previewing the layout
+        $person = new Person(['name' => 'Demo Lid', 'campaign_id' => '0']);
+        $campaign = new Campaign(['name' => 'Voorbeeld Campagne AVG']);
+        $questions = [
+            ['id' => '1', 'question_text' => 'Gaat u akkoord met het publiceren van foto\'s op de website?'],
+            ['id' => '2', 'question_text' => 'Mogen wij uw telefoonnummer delen met andere leden?']
+        ];
+    } elseif ($token) {
+        $person = Person::findByToken($token);
+    }
+    
+    if (!$person && $token !== 'preview') {
+        echo $twig->render('vragenlijst.twig', [
+            'title' => 'Ongeldige of verlopen link',
+            'error' => 'Deze link is ongeldig, niet gevonden of u heeft de vragenlijst reeds ingevuld.'
+        ]);
+        exit;
+    }
+    
+    if ($token !== 'preview') {
+        $campaign = Campaign::findById($person->campaign_id);
+    }
+    
+    if ($person->responded_at && $token !== 'preview') {
+        echo $twig->render('vragenlijst.twig', [
+            'title' => 'Reeds ingevuld',
+            'success' => 'U heeft deze vragenlijst al beantwoord op ' . date('d-m-Y', strtotime($person->responded_at)) . '. Hartelijk dank!'
+        ]);
+        exit;
+    }
+    
+    if ($token !== 'preview') {
+        $pdo = Database::getConnection();
+        $stmtQ = $pdo->prepare('SELECT * FROM questions WHERE campaign_id = ? ORDER BY sort_order ASC');
+        $stmtQ->execute([$campaign->id]);
+        $questions = $stmtQ->fetchAll();
+    }
+    
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($token === 'preview') {
+            echo $twig->render('vragenlijst.twig', [
+                'title' => 'Bedankt! (Preview)',
+                'success' => 'Omdat dit een voorbeeld is, zijn uw antwoorden niet echt opgeslagen. Het formulier werkt helemaal!'
+            ]);
+            exit;
+        }
+        
+        $answers = $_POST['answers'] ?? [];
+        
+        // Save answers
+        foreach ($questions as $q) {
+            $val = isset($answers[$q['id']]) && $answers[$q['id']] === '1' ? 1 : 0;
+            $stmtA = $pdo->prepare('INSERT INTO answers (id, person_id, question_id, answer) VALUES (?, ?, ?, ?)');
+            $stmtA->execute([uniqid('', true), $person->id, $q['id'], $val]);
+        }
+        
+        $person->markAsResponded();
+        $person->expireToken();
+        
+        echo $twig->render('vragenlijst.twig', [
+            'title' => 'Bedankt!',
+            'success' => 'Uw antwoorden zijn succesvol opgeslagen. Hartelijk dank voor uw medewerking!'
+        ]);
+        exit;
+    }
+    
+    echo $twig->render('vragenlijst.twig', [
+        'title' => 'Toestemming - ' . $campaign->name,
+        'person' => $person,
+        'campaign' => $campaign,
+        'questions' => $questions
+    ]);
+    exit;
 }
 
 if ($path === '/' || $path === '/index.php') {
@@ -387,6 +468,28 @@ if ($path === '/' || $path === '/index.php') {
     if (!$campaign || $campaign->user_id !== $_SESSION['user_id']) { die("Campagne niet gevonden."); }
     
     $pdo = Database::getConnection();
+    
+    // Kijk of er al een automatisch gegenereerd rapport is in de reports tabel
+    $stmtR = $pdo->prepare('SELECT file_path FROM reports WHERE campaign_id = ? ORDER BY generated_at DESC LIMIT 1');
+    $stmtR->execute([$campaignId]);
+    $report = $stmtR->fetch(PDO::FETCH_ASSOC);
+    
+    if ($report && !empty($report['file_path'])) {
+        $fullPath = __DIR__ . '/../' . $report['file_path'];
+        if (file_exists($fullPath)) {
+            // Update downloaded_at
+            $pdo->prepare('UPDATE reports SET downloaded_at = NOW(), downloaded_by = ? WHERE file_path = ?')
+                ->execute([$_SESSION['user_id'], $report['file_path']]);
+                
+            header('Content-Type: text/csv');
+            header('Content-Disposition: attachment; filename="' . basename($fullPath) . '"');
+            readfile($fullPath);
+            exit;
+        }
+    }
+    
+    // Als er nog géén rapport is (bijv. campagne nog bezig), genereer live on-the-fly:
+    
     // Get questions
     $stmtQ = $pdo->prepare('SELECT id, question_text FROM questions WHERE campaign_id = ? ORDER BY sort_order ASC');
     $stmtQ->execute([$campaignId]);
@@ -398,7 +501,7 @@ if ($path === '/' || $path === '/index.php') {
     $persons = $stmtP->fetchAll();
     
     header('Content-Type: text/csv');
-    header('Content-Disposition: attachment; filename="rapport_' . strtolower(str_replace(' ', '_', $campaign->name)) . '.csv"');
+    header('Content-Disposition: attachment; filename="live_rapport_' . strtolower(str_replace(' ', '_', $campaign->name)) . '.csv"');
     
     $output = fopen('php://output', 'w');
     
