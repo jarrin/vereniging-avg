@@ -72,11 +72,10 @@ class AuthController
 	{
 		$username = trim($data['username'] ?? '');
 		$email = trim($data['email'] ?? '');
-		$campaign_name = trim($data['campaign_name'] ?? '');
 		$password = $data['password'] ?? '';
 		$passwordConfirm = $data['password_confirm'] ?? '';
 
-		if (!$username || !$email || !$password || !$campaign_name) {
+		if (!$username || !$email || !$password) {
 			return ['success' => false, 'message' => 'Vul alle verplichte velden in.', 'errors' => []];
 		}
 
@@ -104,18 +103,7 @@ class AuthController
 			return $userRes;
 		}
 
-		// Create campaign for this user
-		$user_id = $userRes['id'];
-		$campaignRes = Campaign::create($user_id, $campaign_name);
-		
-		if (!$campaignRes['success']) {
-			// User was created but campaign creation failed
-			// For now, we'll return success as the user account is created
-			// In production, you might want to rollback
-			return ['success' => true, 'message' => 'Account aangemaakt, maar campagne kon niet worden aangemaakt.', 'user_id' => $user_id];
-		}
-
-		return ['success' => true, 'message' => 'Account en campagne aangemaakt!', 'user_id' => $user_id, 'campaign_id' => $campaignRes['id']];
+		return ['success' => true, 'message' => 'Account aangemaakt!', 'user_id' => $userRes['id']];
 	}
 
 	public function login(array $data): array
