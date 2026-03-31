@@ -2229,3 +2229,113 @@ section {
     font-size: 1.5rem;
   }
 }
+
+/* ============================================================
+   Extra Global Responsiveness (Wizard, Tables, Topbars)
+   ============================================================ */
+
+/* Wizard Responsiveness */
+@media (max-width: 768px) {
+  .campaign-steps-circles {
+    margin-bottom: 2rem;
+  }
+  
+  .campaign-step-circle {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .campaign-step-label {
+    display: none; /* Hide text on mobile wizard, show only circles */
+  }
+  
+  .campaign-form-wrapper {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 1rem;
+  }
+  
+  .campaign-form-header {
+    padding: 1rem 1rem 0 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .campaign-form-group {
+    padding: 0 1rem;
+  }
+  
+  .campaign-form-navigation {
+    flex-direction: column-reverse;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    gap: 1rem;
+  }
+  
+  .campaign-btn-nav {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* File upload button full width */
+  .campaign-upload-button, 
+  .campaign-add-question-button {
+    width: 100%;
+  }
+
+  /* Question groups */
+  .campaign-question-group {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0 1rem;
+  }
+}
+
+/* Dashboard Campaign Buttons */
+@media (max-width: 650px) {
+  .topbar-right {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px !important;
+  }
+  
+  .topbar-right .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .campaign-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .campaign-card-footer {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+}
+
+/* Tables */
+@media (max-width: 768px) {
+  .file-format-table, .settings-card table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .danger-flex {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .btn-delete {
+    width: 100%;
+  }
+}

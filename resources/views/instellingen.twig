@@ -42,24 +42,51 @@
             
             <div class="settings-section">
                 <div class="settings-header">
-                    <h2 class="settings-title">Profielgegevens</h2>
-                    <p class="settings-desc">Pas uw e-mailadres of weergegeven naam aan.</p>
+                    <h2 class="settings-title">Verenigingsprofiel</h2>
+                    <p class="settings-desc">Pas uw verenigingsgegevens aan voor gebruik in e-mails.</p>
                 </div>
                 <div class="settings-card">
-                    <form method="post" action="#" class="settings-form">
-                        <div class="form-group row">
+                    <form method="post" action="/instellingen/update-profile" class="settings-form" enctype="multipart/form-data">
+                        <div class="form-group row mb-4">
                             <div class="col-half">
-                                <label for="username">Gebruikersnaam</label>
-                                <input type="text" id="username" name="username" class="campaign-form-input" value="{{ user.username|default('secretaris') }}" readonly>
-                                <small class="form-hint">Gebruikersnaam kan niet gewijzigd worden.</small>
+                                <label for="username">Verenigingsnaam</label>
+                                <input type="text" id="username" name="username" class="campaign-form-input" value="{{ user.username|default('') }}">
+                                <small class="form-hint">Deze naam wordt getoond in e-mails.</small>
                             </div>
                             <div class="col-half">
-                                <label for="email">E-mailadres</label>
-                                <input type="email" id="email" name="email" class="campaign-form-input" value="{{ user.email|default('secretaris@vereniging.nl') }}">
+                                <label for="email">E-mailadres (Beheer)</label>
+                                <input type="email" id="email" name="email" class="campaign-form-input" value="{{ user.email|default('') }}">
                             </div>
                         </div>
+                        <div class="form-group row mb-4">
+                            <div class="col-half">
+                                <label for="contact_person">Contactpersoon</label>
+                                <input type="text" id="contact_person" name="contact_person" class="campaign-form-input" value="{{ user.contact_person|default('') }}" placeholder="Bijv. de secretaris">
+                            </div>
+                            <div class="col-half">
+                                <label for="phone">Telefoonnummer</label>
+                                <input type="text" id="phone" name="phone" class="campaign-form-input" value="{{ user.phone|default('') }}">
+                            </div>
+                        </div>
+                        <div class="form-group mb-4">
+                            <div class="checkbox-wrapper">
+                                <input type="checkbox" id="use_phone" name="use_phone" value="1" {{ user.use_phone ? 'checked' : '' }}>
+                                <label for="use_phone">Telefoonnummer tonen aan leden</label>
+                            </div>
+                        </div>
+                        <div class="form-group mb-4">
+                            <label for="logo">Verenigingslogo (.jpg)</label>
+                            {% if user.logo_path %}
+                                <div class="current-logo mb-2" style="margin-bottom: 1rem;">
+                                    <img src="{{ user.logo_path }}" alt="Huidig logo" style="max-height: 80px; border: 1px solid #ddd; border-radius: 4px; padding: 4px;">
+                                    <p class="form-hint" style="font-size: 0.75rem;">Huidig logo</p>
+                                </div>
+                            {% endif %}
+                            <input type="file" id="logo" name="logo" class="campaign-form-input" accept=".jpg,.jpeg">
+                            <small class="form-hint">Het logo moet een JPG bestand zijn.</small>
+                        </div>
                         <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">Opslaan</button>
+                            <button type="submit" class="btn btn-primary">Profiel bijwerken</button>
                         </div>
                     </form>
                 </div>

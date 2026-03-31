@@ -72,13 +72,25 @@
 						</div>
 
 						<div class="campaign-form-group">
-							<label for="member-list" class="campaign-form-label">Ledenbestand *</label>
-							<label for="member-list" class="campaign-upload-area">
-								<input type="file" id="member-list" name="member_list" accept=".csv,.xlsx,.xls" style="display: none;">
-								<i data-lucide="upload" size="40" id="upload-icon"></i>
-								<span class="upload-text" id="upload-text">Klik om een Excel of CSV bestand te uploaden</span>
-								<span id="selected-file-name" style="display: none; font-weight: 600; color: var(--primary); margin-top: 5px;"></span>
-							</label>
+							<label class="campaign-form-label">Recipiënten toevoegen</label>
+							<div class="input-selection-tabs" style="display: flex; gap: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0;">
+								<button type="button" class="tab-btn active" data-target="upload-area" style="padding: 0.5rem 1rem; border: none; background: none; border-bottom: 2px solid var(--primary); cursor: pointer; font-weight: 500;">Bestand uploaden</button>
+								<button type="button" class="tab-btn" data-target="manual-area" style="padding: 0.5rem 1rem; border: none; background: none; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 500; color: #64748b;">Handmatig plakken</button>
+							</div>
+
+							<div id="upload-area-container">
+								<label for="member-list" class="campaign-upload-area">
+									<input type="file" id="member-list" name="member_list" accept=".csv,.xlsx,.xls" style="display: none;">
+									<i data-lucide="upload" size="40" id="upload-icon"></i>
+									<span class="upload-text" id="upload-text">Klik om een Excel of CSV bestand te uploaden</span>
+									<span id="selected-file-name" style="display: none; font-weight: 600; color: var(--primary); margin-top: 5px;"></span>
+								</label>
+							</div>
+
+							<div id="manual-area-container" style="display: none;">
+								<textarea id="manual-list" name="manual_list" class="campaign-form-input" style="height: 150px; font-family: monospace; font-size: 0.9rem;" placeholder="Naam, Email&#10;Jan Jansen, jan@voorbeeld.nl&#10;Marie de Vries, marie@test.com"></textarea>
+								<p class="form-hint" style="font-size: 0.8rem; color: #64748b; margin-top: 0.5rem;">Eén persoon per regel, gescheiden door een komma.</p>
+							</div>
 						</div>
 
 						<div class="campaign-form-group">
@@ -115,17 +127,48 @@
 		document.addEventListener('DOMContentLoaded', function() {
 			// Handle File Upload display
 			const memberListInput = document.getElementById('member-list');
+			const manualListInput = document.getElementById('manual-list');
 			const uploadText = document.getElementById('upload-text');
 			const selectedFileName = document.getElementById('selected-file-name');
 			const uploadIcon = document.getElementById('upload-icon');
 			const submitBtn = document.getElementById('submit-campaign-btn');
 			const dateInput = document.getElementById('end-date');
+			const tabBtns = document.querySelectorAll('.tab-btn');
+			const uploadContainer = document.getElementById('upload-area-container');
+			const manualContainer = document.getElementById('manual-area-container');
+
+			tabBtns.forEach(btn => {
+				btn.addEventListener('click', () => {
+					const target = btn.getAttribute('data-target');
+					tabBtns.forEach(b => {
+						b.classList.remove('active');
+						b.style.borderBottomColor = 'transparent';
+						b.style.color = '#64748b';
+					});
+					btn.classList.add('active');
+					btn.style.borderBottomColor = 'var(--primary)';
+					btn.style.color = 'var(--text-main)';
+
+					if (target === 'upload-area') {
+						uploadContainer.style.display = 'block';
+						manualContainer.style.display = 'none';
+					} else {
+						uploadContainer.style.display = 'none';
+						manualContainer.style.display = 'block';
+					}
+					checkFormReady();
+				});
+			});
 
 			function checkFormReady() {
 				const hasFile = memberListInput.files.length > 0;
-				const hasDate = dateInput.value.trim() !== '';
+				const hasManual = manualListInput.value.trim() !== '';
+				const hasDate = dateInput.value.trim() !== '' && dateInput.value !== 'dd-mm-jjjj';
 				
-				if (hasFile && hasDate) {
+				const isUploadVisible = uploadContainer.style.display !== 'none';
+				const isDataPresent = isUploadVisible ? hasFile : hasManual;
+
+				if (isDataPresent && hasDate) {
 					submitBtn.disabled = false;
 					submitBtn.classList.remove('campaign-btn-nav-next-foggy');
 					submitBtn.style.cursor = 'pointer';
@@ -136,6 +179,7 @@
 				}
 			}
 
+			manualListInput.addEventListener('input', checkFormReady);
 			memberListInput.addEventListener('change', function(e) {
 				const file = e.target.files[0];
 				if (file) {

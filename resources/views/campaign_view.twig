@@ -7,8 +7,11 @@
             <h1 class="topbar-title">Campagne Details</h1>
             <p class="topbar-subtitle">{{ campaign.name }}</p>
         </div>
-        <div class="topbar-right">
-            <a href="/dashboard" class="btn btn-outline">Terug naar Dashboard</a>
+        <div class="topbar-right" style="display: flex; align-items: center; gap: 10px;">
+            <a href="/vragenlijst?token=preview" target="_blank" class="btn btn-primary" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                <i data-lucide="eye" size="18"></i> Bekijk Voorbeeld Vragenlijst
+            </a>
+            <a href="/dashboard" class="btn btn-outline" style="display: inline-flex; align-items: center; justify-content: center;">Terug naar Dashboard</a>
         </div>
     </div>
 
