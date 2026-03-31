@@ -207,10 +207,50 @@ if ($action === 'login') {
         
         $person->markAsResponded();
         $person->expireToken();
+
+        // ---------------------------------------------------------
+        // SEND CONFIRMATION EMAIL
+        // ---------------------------------------------------------
+        require_once __DIR__ . '/../app/Services/EmailService.php';
+        $appUrl = rtrim(getenv('APP_URL') ?: 'http://localhost/vereniging-avg', '/');
+        
+        // Haal logo op van de vereniging (user)
+        $logoHtml = '';
+        $stmtUser = $pdo->prepare('SELECT logo_path FROM users WHERE id = ?');
+        $stmtUser->execute([$campaign->user_id]);
+        $userData = $stmtUser->fetch();
+        if ($userData && !empty($userData['logo_path'])) {
+            $logoUrl = $appUrl . $userData['logo_path'];
+            $logoHtml = '<div style="margin-bottom: 20px;"><img src="' . htmlspecialchars($logoUrl) . '" alt="' . htmlspecialchars($campaign->name) . '" style="max-height: 100px;"></div>';
+        }
+
+        $confSubject = 'Bevestiging van uw antwoorden - ' . $campaign->name;
+        $confBody = '
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    ' . $logoHtml . '
+                    <h3>Bedankt voor uw reactie</h3>
+                    <p>Beste ' . htmlspecialchars($person->name) . ',</p>
+                    <p>Hartelijk dank voor het invullen van de AVG-vragenlijst voor <strong>' . htmlspecialchars($campaign->name) . '</strong>. Uw antwoorden zijn succesvol verwerkt en opgeslagen.</p>
+                    <p>U hoeft verder geen actie meer te ondernemen.</p>
+                    <br>
+                    <p>Met vriendelijke groet,</p>
+                    <p>' . htmlspecialchars($campaign->name) . '</p>
+                    <div style="font-size: 0.8em; color: #777; border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px;">
+                        Deze bevestiging is automatisch verzonden namens ' . htmlspecialchars($campaign->name) . '.
+                    </div>
+                </div>
+            </body>
+            </html>
+        ';
+        
+        \App\Services\EmailService::send($person->email, $confSubject, $confBody, $campaign->reply_to_email, $campaign->name);
+        // ---------------------------------------------------------
         
         echo $twig->render('vragenlijst.twig', [
             'title' => 'Bedankt!',
-            'success' => 'Uw antwoorden zijn succesvol opgeslagen. Hartelijk dank voor uw medewerking!'
+            'success' => 'Uw antwoorden zijn succesvol opgeslagen. U ontvangt per e-mail een bevestiging. Hartelijk dank voor uw medewerking!'
         ]);
         exit;
     }
@@ -251,7 +291,12 @@ if ($path === '/' || $path === '/index.php') {
         $stmtResponded->execute([$campaign['id']]);
         $campaign['responded_count'] = $stmtResponded->fetch()['responded'];
         
+        $stmtFailed = $pdo->prepare('SELECT COUNT(*) as failed FROM persons WHERE campaign_id = ? AND email_status = "failed"');
+        $stmtFailed->execute([$campaign['id']]);
+        $campaign['failed_count'] = $stmtFailed->fetch()['failed'];
+        
         $campaign['response_pct'] = $campaign['total_members'] > 0 ? round(($campaign['responded_count'] / $campaign['total_members']) * 100) : 0;
+        $campaign['failed_pct'] = $campaign['total_members'] > 0 ? round(($campaign['failed_count'] / $campaign['total_members']) * 100) : 0;
     }
     
     // General stats
@@ -369,13 +414,13 @@ if ($path === '/' || $path === '/index.php') {
                 $stmt->execute([$qId, $campaignId, $qText, $index]);
             }
             
-            // 3. Process Member List (Excel/CSV)
+            // 3. Process Member List (Excel/CSV or Manual)
+            require_once __DIR__ . '/../models/Person.php';
+            
             if (!empty($_FILES['member_list']['name'])) {
                 try {
                     $filePath = $_FILES['member_list']['tmp_name'];
                     $ext = strtolower(pathinfo($_FILES['member_list']['name'], PATHINFO_EXTENSION));
-                    
-                    require_once __DIR__ . '/../models/Person.php';
                     
                     if ($ext === 'csv') {
                         if (($handle = fopen($filePath, "r")) !== FALSE) {
@@ -399,7 +444,26 @@ if ($path === '/' || $path === '/index.php') {
                         }
                     }
                 } catch (\Exception $e) {
-                    // Silently fail for now or handle as needed
+                    error_log("Ledenlijst upload fout: " . $e->getMessage());
+                }
+            } elseif (!empty($data['manual_list'])) {
+                // Process manual list from textarea
+                $lines = explode("\n", $data['manual_list']);
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if (empty($line)) continue;
+                    
+                    // Allow both comma and semicolon
+                    $separator = strpos($line, ';') !== false ? ';' : ',';
+                    $parts = explode($separator, $line);
+                    
+                    if (count($parts) >= 2) {
+                        $name = trim($parts[0]);
+                        $email = trim($parts[1]);
+                        if (!empty($name) && !empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                            Person::register($name, $email, $campaignId);
+                        }
+                    }
                 }
             }
             
@@ -557,10 +621,58 @@ if ($path === '/' || $path === '/index.php') {
         header('Location: /index.php?action=login');
         exit;
     }
+    
+    // Fetch latest user data from DB to ensure session is up to date
+    $pdo = Database::getConnection();
+    $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
+    $stmt->execute([$_SESSION['user_id']]);
+    $dbUser = $stmt->fetch();
+    
     echo $twig->render('instellingen.twig', [
         'title' => 'Instellingen - AVG Verenigingen',
-        'user' => $_SESSION,
+        'user' => $dbUser ?: $_SESSION,
     ]);
+} elseif ($path === '/instellingen/update-profile') {
+    if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
+    
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $pdo = Database::getConnection();
+        $username = $_POST['username'] ?? '';
+        $email = $_POST['email'] ?? '';
+        $contact_person = $_POST['contact_person'] ?? '';
+        $phone = $_POST['phone'] ?? '';
+        $use_phone = isset($_POST['use_phone']) ? 1 : 0;
+        
+        // Handle logo upload
+        $logoPath = null;
+        if (!empty($_FILES['logo']['name'])) {
+            $uploadDir = __DIR__ . '/uploads/logos/';
+            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+            
+            $ext = strtolower(pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION));
+            if (in_array($ext, ['jpg', 'jpeg'])) {
+                $newFileName = 'logo_' . $_SESSION['user_id'] . '_' . time() . '.' . $ext;
+                if (move_uploaded_file($_FILES['logo']['tmp_name'], $uploadDir . $newFileName)) {
+                    $logoPath = '/uploads/logos/' . $newFileName;
+                }
+            }
+        }
+        
+        if ($logoPath) {
+            $stmt = $pdo->prepare('UPDATE users SET username = ?, email = ?, contact_person = ?, phone = ?, use_phone = ?, logo_path = ? WHERE id = ?');
+            $stmt->execute([$username, $email, $contact_person, $phone, $use_phone, $logoPath, $_SESSION['user_id']]);
+        } else {
+            $stmt = $pdo->prepare('UPDATE users SET username = ?, email = ?, contact_person = ?, phone = ?, use_phone = ? WHERE id = ?');
+            $stmt->execute([$username, $email, $contact_person, $phone, $use_phone, $_SESSION['user_id']]);
+        }
+        
+        // Update session
+        $_SESSION['username'] = $username;
+        $_SESSION['email'] = $email;
+        
+        header('Location: /instellingen?message=profile_updated');
+        exit;
+    }
 } else {
     // Protected pages - require login
     if (!$isLoggedIn) {

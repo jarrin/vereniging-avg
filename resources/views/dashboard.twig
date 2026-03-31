@@ -150,10 +150,18 @@
                         </div>
                     </div>
                     <div class="campaign-card-footer">
-                        <span class="footer-warning">
-                            <i data-lucide="alert-triangle" size="14"></i>
-                            {{ campaign.total_members - campaign.responded_count }} nog niet gereageerd
-                        </span>
+                        <div class="footer-stats">
+                            <span class="footer-warning">
+                                <i data-lucide="alert-triangle" size="14"></i>
+                                {{ campaign.total_members - campaign.responded_count }} wachtend
+                            </span>
+                            {% if campaign.failed_count > 0 %}
+                                <span class="footer-error" style="color: #ef4444; font-size: 0.8rem; display: flex; align-items: center; gap: 0.25rem; font-weight: 500;">
+                                    <i data-lucide="mail-warning" size="14"></i>
+                                    {{ campaign.failed_count }} foutief
+                                </span>
+                            {% endif %}
+                        </div>
                         <a href="/campagne/view/{{ campaign.id }}" class="campaign-card-link">Bekijken <i data-lucide="arrow-right" size="14"></i></a>
                     </div>
                 </div>

@@ -38,7 +38,7 @@ $appUrl = rtrim(getenv('APP_URL') ?: 'http://localhost/vereniging-avg', '/');
 // --- 2. INITIELE EMAILS VERZENDEN ---
 // Selecteer personen waarvan de e-mail nog verzonden moet worden, in een actieve campagne
 $stmt = $pdo->prepare('
-    SELECT p.*, c.name AS campaign_name, c.reply_to_email, c.email_subject, c.email_body, c.end_date
+    SELECT p.*, c.user_id, c.name AS campaign_name, c.reply_to_email, c.email_subject, c.email_body, c.end_date
     FROM persons p 
     JOIN campaigns c ON p.campaign_id = c.id
     WHERE c.status = "active" 
@@ -65,7 +65,7 @@ foreach ($pendingPersons as $person) {
 // Selecteer personen waarbij herinneringen aan staan, e-mail reeds succesvol verzonden,
 // nog niet gereageerd, nog geen herinnering gestuurd, en de wachttijd is verstreken.
 $stmtReminders = $pdo->prepare('
-    SELECT p.*, c.name AS campaign_name, c.reply_to_email, c.reminder_subject AS email_subject, c.reminder_body AS email_body, c.end_date
+    SELECT p.*, c.user_id, c.name AS campaign_name, c.reply_to_email, c.reminder_subject AS email_subject, c.reminder_body AS email_body, c.end_date
     FROM persons p 
     JOIN campaigns c ON p.campaign_id = c.id
     WHERE c.status = "active" 
@@ -129,7 +129,7 @@ function sendCampaignEmail(array $person, string $type, string $appUrl, PDO $pdo
         }
 
         $mailFrom = getenv('MAIL_FROM_ADDRESS') ?: 'noreply@vereniging-avg.nl';
-        $mailFromName = getenv('MAIL_FROM_NAME') ?: 'AVG Vragenlijsten';
+        $mailFromName = $person['campaign_name'] ?: (getenv('MAIL_FROM_NAME') ?: 'AVG Vragenlijsten');
         
         $mail->setFrom($mailFrom, $mailFromName);
         $mail->addAddress($person['email'], $person['name']);
@@ -138,39 +138,72 @@ function sendCampaignEmail(array $person, string $type, string $appUrl, PDO $pdo
             $mail->addReplyTo($person['reply_to_email']);
         }
 
-        // Genereer de unieke link met token
-        $linkUrl = $appUrl . '/vragenlijst.php?token=' . $person['token']; // Pas .php aan naargelang routing setup
-        $linkHtml = '<a href="' . htmlspecialchars($linkUrl) . '">Klik hier om uw gegevens te bevestigen</a>';
+        // Haal verenigingsgegevens op (via user)
+        $logoHtml = '';
+        $contactPerson = $person['campaign_name'] ?: 'het bestuur';
+        if (!empty($person['user_id'])) {
+            $stmtUser = $pdo->prepare('SELECT logo_path, contact_person FROM users WHERE id = ?');
+            $stmtUser->execute([$person['user_id']]);
+            $userData = $stmtUser->fetch();
+            if ($userData) {
+                if (!empty($userData['logo_path'])) {
+                    $logoUrl = $appUrl . $userData['logo_path'];
+                    $logoHtml = '<div style="margin-bottom: 20px;"><img src="' . htmlspecialchars($logoUrl) . '" alt="' . htmlspecialchars($person['campaign_name']) . '" style="max-height: 100px;"></div>';
+                }
+                if (!empty($userData['contact_person'])) {
+                    $contactPerson = $userData['contact_person'];
+                }
+            }
+        }
+
+        // Genereer de unieke link met token (routing gebruikt /vragenlijst, niet /vragenlijst.php)
+        $linkUrl = $appUrl . '/vragenlijst?token=' . $person['token'];
+        $linkHtml = '<a href="' . htmlspecialchars($linkUrl) . '" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">Klik hier om uw gegevens te bevestigen</a>';
 
         // Vervang de beschikbare variabelen in de tekst
-        // Beschikbare variabelen volgens de frontend: {naam}, {verenigingsnaam}, {contactpersoon}, {link}, {einddatum}
-        // Noot: verenigingsnaam/contactpersoon halen we momenteel niet direct op, we vervangen het met standaard of de campagnenaam.
-        $search = ['{naam}', '{link}', '{einddatum}', '{verenigingsnaam}'];
-        $endDateFormatted = !empty($person['end_date']) ? date('d-m-Y', strtotime($person['end_date'])) : 'onbekend';
+        $search = ['{naam}', '{link}', '{einddatum}', '{verenigingsnaam}', '{contactpersoon}'];
+        $endDateFormatted = !empty($person['end_date']) ? date('d-m-Y', strtotime($person['end_date'])) : 'de einddatum';
         
         $replaceHtml = [
-            htmlspecialchars($person['name']),
+            htmlspecialchars($person['name'] ?? ''),
             $linkHtml,
             $endDateFormatted,
-            htmlspecialchars($person['campaign_name'])
+            htmlspecialchars($person['campaign_name'] ?? ''),
+            htmlspecialchars($contactPerson)
         ];
 
         $replacePlain = [
-            $person['name'],
+            $person['name'] ?? '',
             $linkUrl,
             $endDateFormatted,
-            $person['campaign_name']
+            $person['campaign_name'] ?? '',
+            $contactPerson
         ];
 
-        $bodyHtml = str_replace($search, $replaceHtml, $person['email_body']);
-        $bodyPlain = str_replace($search, $replacePlain, $person['email_body']);
+        $bodyContent = str_replace($search, $replaceHtml, $person['email_body']);
         $subject = str_replace($search, $replacePlain, $person['email_subject']);
 
-        // Voeg basis styling toe indien gewenst
+        // Wrap in basis HTML template voor een betere uitstraling
+        $bodyHtml = '
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    ' . $logoHtml . '
+                    <div style="margin-bottom: 30px;">
+                        ' . nl2br($bodyContent) . '
+                    </div>
+                    <div style="font-size: 0.8em; color: #777; border-top: 1px solid #eee; padding-top: 20px;">
+                        Deze e-mail is verzonden door ' . htmlspecialchars($person['campaign_name'] ?: 'uw vereniging') . ' via het AVG Vragenlijsten platform.
+                    </div>
+                </div>
+            </body>
+            </html>
+        ';
+
         $mail->isHTML(true);
         $mail->Subject = $subject;
-        $mail->Body    = nl2br($bodyHtml);
-        $mail->AltBody = strip_tags($bodyPlain);
+        $mail->Body    = $bodyHtml;
+        $mail->AltBody = strip_tags(str_replace($search, $replacePlain, $person['email_body']));
 
         // Verstuur de mail
         $mail->send();
@@ -179,12 +212,11 @@ function sendCampaignEmail(array $person, string $type, string $appUrl, PDO $pdo
         if ($type === 'initial') {
             $stmt = $pdo->prepare('UPDATE persons SET email_status = "sent", first_sent_at = NOW() WHERE id = ?');
         } else {
-            // we gaan er van uit dat status "sent" blijft bij een herinnering
             $stmt = $pdo->prepare('UPDATE persons SET reminder_sent_at = NOW() WHERE id = ?');
         }
         $stmt->execute([$person['id']]);
 
-        // Voeg logging toe voor geslaagde verzending
+        // Voeg logging toe
         $logId = uniqid('', true);
         $logStmt = $pdo->prepare('INSERT INTO email_logs (id, person_id, campaign_id, type, status, sent_at) VALUES (?, ?, ?, ?, ?, NOW())');
         $logStmt->execute([$logId, $person['id'], $person['campaign_id'], $type, 'success']);

@@ -60,6 +60,30 @@ foreach ($campaigns as $campaign) {
         $stmtP->execute([$campaignId]);
         $persons = $stmtP->fetchAll(PDO::FETCH_ASSOC);
         
+        // --- 2b. PAS NON-RESPONSE LOGICA TOE (GDPR 'Default to No') ---
+        if ($campaign['non_response_action'] === 'default_no') {
+            foreach ($persons as &$person) {
+                if ($person['responded_at'] === null) {
+                    // Maak fictieve 'Nee' antwoorden aan in de database voor deze persoon
+                    foreach ($questions as $q) {
+                        // Check eerst of er stiekem toch al een antwoord is (zou niet moeten bij responded_at IS NULL)
+                        $stmtCheck = $pdo->prepare('SELECT id FROM answers WHERE person_id = ? AND question_id = ?');
+                        $stmtCheck->execute([$person['id'], $q['id']]);
+                        if (!$stmtCheck->fetch()) {
+                            $stmtA = $pdo->prepare('INSERT INTO answers (id, person_id, question_id, answer, answered_at) VALUES (?, ?, ?, 0, NOW())');
+                            $stmtA->execute([uniqid('', true), $person['id'], $q['id']]);
+                        }
+                    }
+                    // Markeer als responded (datum van nu, omdat de deadline is verstreken)
+                    $pdo->prepare('UPDATE persons SET responded_at = NOW(), token_expired = 1 WHERE id = ?')
+                        ->execute([$person['id']]);
+                    
+                    $person['responded_at'] = date('Y-m-d H:i:s'); // Update lokale array voor de CSV hieronder
+                }
+            }
+        }
+        // ------------------------------------------------------------------
+
         // 3. Bestandsnaam genereren
         $fileName = 'rapport_' . strtolower(preg_replace('/[^a-zA-Z0-9]+/', '_', $campaign['name'])) . '_' . date('Ymd_His') . '.csv';
         $fullPath = $baseDir . '/' . $fileName;
