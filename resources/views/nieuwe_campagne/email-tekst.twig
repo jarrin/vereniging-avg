@@ -117,6 +117,7 @@
 								<select id="action-no-response" name="action_no_response" class="campaign-form-dropdown">
 									<option value="no_action" {{ session.new_campaign.action_no_response == 'no_action' ? 'selected' : '' }}>Geen actie</option>
 									<option value="reminder" {{ session.new_campaign.action_no_response == 'reminder' ? 'selected' : '' }}>Herinnering sturen</option>
+									<option value="default_no" {{ session.new_campaign.action_no_response == 'default_no' ? 'selected' : '' }}>Automatisch op 'Nee' zetten (Default to No)</option>
 								</select>
 								<i data-lucide="chevron-down" class="dropdown-icon"></i>
 							</div>

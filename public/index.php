@@ -392,8 +392,14 @@ if ($path === '/' || $path === '/index.php') {
             $campaign->reminder_subject = $data['reminder_subject'] ?? '';
             $campaign->reminder_body = $data['email_signature'] ?? ''; 
             
-            // Map 'reminder' to 'send_reminder' as per schema enum
-            $campaign->non_response_action = ($data['action_no_response'] ?? 'no_action') === 'reminder' ? 'send_reminder' : 'no_action';
+            $action = $data['action_no_response'] ?? 'no_action';
+            if ($action === 'reminder') {
+                $campaign->non_response_action = 'send_reminder';
+            } elseif ($action === 'default_no') {
+                $campaign->non_response_action = 'default_no';
+            } else {
+                $campaign->non_response_action = 'no_action';
+            }
             
             $campaign->reminder_days = $data['reminder_days'] ?? 7;
             $campaign->reminder_enabled = ($campaign->non_response_action === 'send_reminder');
