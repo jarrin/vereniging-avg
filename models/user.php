@@ -232,6 +232,7 @@ class User
         $_SESSION['user_id'] = $user->id;
         $_SESSION['username'] = $user->username;
         $_SESSION['email'] = $user->email;
+        $_SESSION['logo_path'] = $user->logo_path;
 
         if ($remember) {
             $token = bin2hex(random_bytes(32));

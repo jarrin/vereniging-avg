@@ -1228,6 +1228,11 @@ section {
   gap: 10px;
   flex: 1;
   min-width: 0;
+  text-decoration: none;
+}
+
+.sidebar-user:hover .sidebar-user-name {
+  color: var(--primary);
 }
 
 .sidebar-avatar {
@@ -1240,6 +1245,13 @@ section {
   justify-content: center;
   color: var(--primary);
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sidebar-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .sidebar-avatar i {

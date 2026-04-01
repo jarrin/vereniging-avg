@@ -736,6 +736,9 @@ if ($path === '/' || $path === '/index.php') {
         // Update session
         $_SESSION['username'] = $username;
         $_SESSION['email'] = $email;
+        if ($logoPath) {
+            $_SESSION['logo_path'] = $logoPath;
+        }
         
         header('Location: /instellingen?message=profile_updated');
         exit;
