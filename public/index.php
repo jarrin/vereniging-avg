@@ -308,14 +308,35 @@ if ($path === '/' || $path === '/index.php') {
     }
     
     // General stats
-    $stmtTotalAll = $pdo->prepare('SELECT COUNT(*) as total FROM persons p JOIN campaigns c ON p.campaign_id = c.id WHERE c.user_id = ?');
-    $stmtTotalAll->execute([$_SESSION['user_id']]);
-    $totalMembers = $stmtTotalAll->fetch()['total'];
+    $stmtStats = $pdo->prepare('
+        SELECT 
+            COUNT(p.id) as total_members,
+            SUM(CASE WHEN p.responded_at IS NOT NULL THEN 1 ELSE 0 END) as total_responded,
+            (SELECT COUNT(*) FROM campaigns WHERE user_id = ? AND status = "active") as active_campaigns
+        FROM campaigns c
+        LEFT JOIN persons p ON c.id = p.campaign_id
+        WHERE c.user_id = ? AND c.status != "deleted"
+    ');
+    $stmtStats->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
+    $stats = $stmtStats->fetch();
     
+    $totalMembers = $stats['total_members'] ?? 0;
+    $totalResponded = $stats['total_responded'] ?? 0;
+    $totalWaiting = $totalMembers - $totalResponded;
+    $activeCampaigns = $stats['active_campaigns'] ?? 0;
+    
+    $respondedPct = $totalMembers > 0 ? round(($totalResponded / $totalMembers) * 100) : 0;
+    $waitingPct = $totalMembers > 0 ? round(($totalWaiting / $totalMembers) * 100) : 100;
+
     echo $twig->render('dashboard.twig', [
         'title' => 'Dashboard - AVG Verenigingen',
         'campaigns' => $campaigns,
         'total_members' => $totalMembers,
+        'total_responded' => $totalResponded,
+        'total_waiting' => $totalWaiting,
+        'responded_pct' => $respondedPct,
+        'waiting_pct' => $waitingPct,
+        'active_campaigns_count' => $activeCampaigns,
         'message' => $_GET['message'] ?? null,
     ]);
 } elseif ($path === '/campagne/nieuw') {
