@@ -51,6 +51,25 @@ services:
     networks:
       - avg_network
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: vereniging_avg_mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - avg_network
+
+  cron:
+    image: alpine:latest
+    container_name: vereniging_avg_cron
+    depends_on:
+      - web
+    networks:
+      - avg_network
+    command: >
+      sh -c "echo '* * * * * wget -qO- http://web/run-cron?secret=avg_secret_123 > /dev/null 2>&1' > /etc/crontabs/root && crond -f -l 2"
+
 volumes:
   db_data:
 

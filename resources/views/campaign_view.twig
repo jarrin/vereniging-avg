@@ -8,12 +8,22 @@
             <p class="topbar-subtitle">{{ campaign.name }}</p>
         </div>
         <div class="topbar-right" style="display: flex; align-items: center; gap: 10px;">
+            <button onclick="document.getElementById('add-person-modal').style.display='flex'" class="btn btn-success" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background-color: #16a34a; color: white;">
+                <i data-lucide="plus" size="18"></i> Lid Toevoegen
+            </button>
             <a href="/vragenlijst?token=preview" target="_blank" class="btn btn-primary" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
                 <i data-lucide="eye" size="18"></i> Bekijk Voorbeeld Vragenlijst
             </a>
             <a href="/dashboard" class="btn btn-outline" style="display: inline-flex; align-items: center; justify-content: center;">Terug naar Dashboard</a>
         </div>
     </div>
+
+    {% if message == 'lid_toegevoegd' %}
+        <div class="alert alert-success" style="margin-bottom: 2rem; background-color: #dcfce7; color: #166534; padding: 1rem; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+            <i data-lucide="check-circle" size="20"></i>
+            Lid is succesvol toegevoegd aan de wachtrij en zal binnen 1 minuut de e-mail ontvangen.
+        </div>
+    {% endif %}
 
     <div class="stats-row">
         <div class="stat-card">
@@ -72,6 +82,30 @@
                 </tbody>
             </table>
         </div>
+    </div>
+</div>
+
+<!-- Modal for adding a person -->
+<div id="add-person-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 12px; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+            <i data-lucide="user-plus" size="24"></i> Lid Toevoegen
+        </h3>
+        <form action="/campagne/lid/toevoegen" method="POST">
+            <input type="hidden" name="campaign_id" value="{{ campaign.id }}">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Volledige Naam *</label>
+                <input type="text" name="name" required style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px;" placeholder="Jan Jansen">
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">E-mailadres *</label>
+                <input type="email" name="email" required style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px;" placeholder="jan@voorbeeld.nl">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="document.getElementById('add-person-modal').style.display='none'" class="btn btn-outline" style="padding: 0.75rem 1.5rem;">Annuleren</button>
+                <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Opslaan</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

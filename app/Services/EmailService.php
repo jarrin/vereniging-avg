@@ -1,4 +1,4 @@
- <?php
+<?php
 
 namespace App\Services;
 
@@ -13,22 +13,24 @@ class EmailService
         $mail = new PHPMailer(true);
         
         try {
-            if (getenv('MAIL_MAILER') === 'smtp') {
+            if (trim($_ENV['MAIL_MAILER'] ?? getenv('MAIL_MAILER') ?? '') === 'smtp') {
                 $mail->isSMTP();
-                $mail->Host       = getenv('MAIL_HOST');
-                $mail->SMTPAuth   = !empty(getenv('MAIL_USERNAME')) && getenv('MAIL_USERNAME') !== 'null';
+                $mail->Host       = $_ENV['MAIL_HOST'] ?? getenv('MAIL_HOST');
+                $mail->SMTPAuth   = !empty($_ENV['MAIL_USERNAME'] ?? getenv('MAIL_USERNAME')) && ($_ENV['MAIL_USERNAME'] ?? getenv('MAIL_USERNAME')) !== 'null';
                 if ($mail->SMTPAuth) {
-                    $mail->Username   = getenv('MAIL_USERNAME');
-                    $mail->Password   = getenv('MAIL_PASSWORD');
+                    $mail->Username   = $_ENV['MAIL_USERNAME'] ?? getenv('MAIL_USERNAME');
+                    $mail->Password   = $_ENV['MAIL_PASSWORD'] ?? getenv('MAIL_PASSWORD');
                 }
-                if (getenv('MAIL_ENCRYPTION') && getenv('MAIL_ENCRYPTION') !== 'null') {
-                    $mail->SMTPSecure = getenv('MAIL_ENCRYPTION');
+                $mailEncryption = $_ENV['MAIL_ENCRYPTION'] ?? getenv('MAIL_ENCRYPTION');
+                if ($mailEncryption && $mailEncryption !== 'null') {
+                    $mail->SMTPSecure = $mailEncryption;
                 }
-                $mail->Port       = getenv('MAIL_PORT') ?: 1025;
+                $mail->Port       = $_ENV['MAIL_PORT'] ?? getenv('MAIL_PORT') ?: 1025;
                 $mail->SMTPDebug = 0;
             }
 
-            $mailFrom = getenv('MAIL_FROM_ADDRESS') ?: 'noreply@vereniging-avg.nl';
+            $mailFrom = $_ENV['MAIL_FROM_ADDRESS'] ?? getenv('MAIL_FROM_ADDRESS') ?: 'noreply@vereniging-avg.nl';
+
             
             $mail->setFrom($mailFrom, $fromName);
             $mail->addAddress($to);

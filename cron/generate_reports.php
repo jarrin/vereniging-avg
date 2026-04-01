@@ -91,12 +91,14 @@ foreach ($campaigns as $campaign) {
         
         $output = fopen($fullPath, 'w');
         
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF)); // Write UTF-8 BOM
+        
         // 4. CSV Header schrijven
         $header = ['Naam', 'E-mail', 'Status', 'Gereageerd op'];
         foreach ($questions as $q) { 
             $header[] = $q['question_text']; 
         }
-        fputcsv($output, $header);
+        fputcsv($output, $header, ';');
         
         // 5. Data rijen schrijven
         foreach ($persons as $person) {
@@ -119,7 +121,7 @@ foreach ($campaigns as $campaign) {
                     $row[] = '-'; // Nog geen antwoord
                 }
             }
-            fputcsv($output, $row);
+            fputcsv($output, $row, ';');
         }
         
         fclose($output);

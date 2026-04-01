@@ -28,6 +28,13 @@ body {
   color: var(--text-main);
   line-height: 1.6;
   background-color: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
 }
 
 /* On dashboard pages the <main> should not add extra whitespace */

@@ -212,15 +212,23 @@ if ($action === 'login') {
         // SEND CONFIRMATION EMAIL
         // ---------------------------------------------------------
         require_once __DIR__ . '/../app/Services/EmailService.php';
-        $appUrl = rtrim(getenv('APP_URL') ?: 'http://localhost/vereniging-avg', '/');
+        $appUrl = rtrim($_ENV['APP_URL'] ?? getenv('APP_URL') ?: 'http://localhost:8080', '/');
         
-        // Haal logo op van de vereniging (user)
+        // Haal logo op: Prioriteit 1: Campagne logo, Prioriteit 2: Gebruiker logo
         $logoHtml = '';
-        $stmtUser = $pdo->prepare('SELECT logo_path FROM users WHERE id = ?');
-        $stmtUser->execute([$campaign->user_id]);
-        $userData = $stmtUser->fetch();
-        if ($userData && !empty($userData['logo_path'])) {
-            $logoUrl = $appUrl . $userData['logo_path'];
+        $finalLogoPath = $campaign->logo_path;
+        
+        if (!$finalLogoPath) {
+            $stmtUser = $pdo->prepare('SELECT logo_path FROM users WHERE id = ?');
+            $stmtUser->execute([$campaign->user_id]);
+            $userData = $stmtUser->fetch();
+            if ($userData && !empty($userData['logo_path'])) {
+                $finalLogoPath = $userData['logo_path'];
+            }
+        }
+        
+        if ($finalLogoPath) {
+            $logoUrl = $appUrl . $finalLogoPath;
             $logoHtml = '<div style="margin-bottom: 20px;"><img src="' . htmlspecialchars($logoUrl) . '" alt="' . htmlspecialchars($campaign->name) . '" style="max-height: 100px;"></div>';
         }
 
@@ -377,7 +385,8 @@ if ($path === '/' || $path === '/index.php') {
                 $data['org_name'] ?? 'Nieuwe Campagne',
                 $data['reply_to_email'] ?? '',
                 $data['email_subject'] ?? '',
-                $data['email_body'] ?? ''
+                $data['email_body'] ?? '',
+                $data['logo_path'] ?? ''
             );
         }
         
@@ -388,6 +397,7 @@ if ($path === '/' || $path === '/index.php') {
             $campaign->reply_to_email = $data['reply_to_email'] ?? $campaign->reply_to_email;
             $campaign->email_subject = $data['email_subject'] ?? $campaign->email_subject;
             $campaign->email_body = $data['email_body'] ?? $campaign->email_body;
+            $campaign->logo_path = $data['logo_path'] ?? $campaign->logo_path;
             $campaign->end_date = $data['end_date'] ?? null;
             $campaign->reminder_subject = $data['reminder_subject'] ?? '';
             $campaign->reminder_body = $data['email_signature'] ?? ''; 
@@ -454,13 +464,21 @@ if ($path === '/' || $path === '/index.php') {
                 }
             } elseif (!empty($data['manual_list'])) {
                 // Process manual list from textarea
-                $lines = explode("\n", $data['manual_list']);
+                // Repair broken copy-paste where a newline immediately follows a comma
+                $manualList = preg_replace('/,\s*[\r\n]+/', ',', $data['manual_list']);
+                $lines = explode("\n", $manualList);
+                
                 foreach ($lines as $line) {
                     $line = trim($line);
                     if (empty($line)) continue;
                     
-                    // Allow both comma and semicolon
-                    $separator = strpos($line, ';') !== false ? ';' : ',';
+                    // Allow comma, semicolon OR tab
+                    if (strpos($line, "\t") !== false) {
+                        $separator = "\t";
+                    } else {
+                        $separator = strpos($line, ';') !== false ? ';' : ',';
+                    }
+                    
                     $parts = explode($separator, $line);
                     
                     if (count($parts) >= 2) {
@@ -524,8 +542,25 @@ if ($path === '/' || $path === '/index.php') {
         'title' => 'Campagne Details - ' . $campaign->name,
         'campaign' => $campaign,
         'questions' => $questions,
-        'persons' => $persons
+        'persons' => $persons,
+        'message' => $_GET['message'] ?? null
     ]);
+} elseif ($path === '/campagne/lid/toevoegen') {
+    if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        require_once __DIR__ . '/../models/Person.php';
+        $campaignId = $_POST['campaign_id'];
+        $name = trim($_POST['name']);
+        $email = trim($_POST['email']);
+        
+        if (!empty($name) && !empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            Person::register($name, $email, $campaignId);
+            header("Location: /campagne/view/$campaignId?message=lid_toegevoegd");
+        } else {
+            header("Location: /campagne/view/$campaignId?error=invalid_data");
+        }
+        exit;
+    }
 } elseif (preg_match('/^\/campagne\/edit\/(.+)$/', $path, $matches)) {
     if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
     require_once __DIR__ . '/../models/Campaign.php';
@@ -581,8 +616,10 @@ if ($path === '/' || $path === '/index.php') {
             $pdo->prepare('UPDATE campaigns SET auto_delete_at = DATE_ADD(NOW(), INTERVAL 24 HOUR) WHERE id = ? AND auto_delete_at IS NULL')
                 ->execute([$campaignId]);
                 
+            if (ob_get_level() > 0) ob_end_clean();
+            $safeFileName = preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', basename($fullPath));
             header('Content-Type: text/csv');
-            header('Content-Disposition: attachment; filename="' . basename($fullPath) . '"');
+            header('Content-Disposition: attachment; filename="' . $safeFileName . '"');
             readfile($fullPath);
             exit;
         }
@@ -600,15 +637,18 @@ if ($path === '/' || $path === '/index.php') {
     $stmtP->execute([$campaignId]);
     $persons = $stmtP->fetchAll();
     
-    header('Content-Type: text/csv');
-    header('Content-Disposition: attachment; filename="live_rapport_' . strtolower(str_replace(' ', '_', $campaign->name)) . '.csv"');
+    if (ob_get_level() > 0) ob_end_clean();
+    $safeName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $campaign->name ?? 'campagne');
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="live_rapport_' . strtolower($safeName) . '.csv"');
     
     $output = fopen('php://output', 'w');
+    fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
     
     // Header
     $header = ['Naam', 'E-mail', 'Status', 'Gereageerd op'];
     foreach ($questions as $q) { $header[] = $q['question_text']; }
-    fputcsv($output, $header);
+    fputcsv($output, $header, ';');
     
     foreach ($persons as $person) {
         $row = [$person['name'], $person['email'], $person['email_status'], $person['responded_at']];
@@ -618,7 +658,7 @@ if ($path === '/' || $path === '/index.php') {
             $ans = $stmtA->fetch();
             $row[] = $ans ? ($ans['answer'] ? 'Ja' : 'Nee') : '-';
         }
-        fputcsv($output, $row);
+        fputcsv($output, $row, ';');
     }
     fclose($output);
     exit;

@@ -33,12 +33,12 @@ $pdo = Database::getConnection();
 
 // --- 1. CONFIGURATIE ---
 $batchLimit = 50; // Maximaal 50 emails per run versturen (anti-abuse throttling)
-$appUrl = rtrim(getenv('APP_URL') ?: 'http://localhost/vereniging-avg', '/');
+$appUrl = rtrim($_ENV['APP_URL'] ?? getenv('APP_URL') ?: 'http://localhost:8080', '/');
 
 // --- 2. INITIELE EMAILS VERZENDEN ---
 // Selecteer personen waarvan de e-mail nog verzonden moet worden, in een actieve campagne
 $stmt = $pdo->prepare('
-    SELECT p.*, c.user_id, c.name AS campaign_name, c.reply_to_email, c.email_subject, c.email_body, c.end_date
+    SELECT p.*, c.user_id, c.name AS campaign_name, c.logo_path AS campaign_logo, c.reply_to_email, c.email_subject, c.email_body, c.end_date
     FROM persons p 
     JOIN campaigns c ON p.campaign_id = c.id
     WHERE c.status = "active" 
@@ -61,11 +61,10 @@ foreach ($pendingPersons as $person) {
     }
 }
 
-// --- 3. HERINNERINGEN VERZENDEN ---
 // Selecteer personen waarbij herinneringen aan staan, e-mail reeds succesvol verzonden,
 // nog niet gereageerd, nog geen herinnering gestuurd, en de wachttijd is verstreken.
 $stmtReminders = $pdo->prepare('
-    SELECT p.*, c.user_id, c.name AS campaign_name, c.reply_to_email, c.reminder_subject AS email_subject, c.reminder_body AS email_body, c.end_date
+    SELECT p.*, c.user_id, c.name AS campaign_name, c.logo_path AS campaign_logo, c.reply_to_email, c.reminder_subject AS email_subject, c.reminder_body AS email_body, c.end_date
     FROM persons p 
     JOIN campaigns c ON p.campaign_id = c.id
     WHERE c.status = "active" 
@@ -111,25 +110,25 @@ function sendCampaignEmail(array $person, string $type, string $appUrl, PDO $pdo
     $mail = new PHPMailer(true);
     
     try {
-        if (getenv('MAIL_MAILER') === 'smtp') {
+        if (trim($_ENV['MAIL_MAILER'] ?? getenv('MAIL_MAILER') ?? '') === 'smtp') {
             $mail->isSMTP();
-            $mail->Host       = getenv('MAIL_HOST');
-            $mail->SMTPAuth   = !empty(getenv('MAIL_USERNAME')) && getenv('MAIL_USERNAME') !== 'null';
+            $mail->Host       = $_ENV['MAIL_HOST'] ?? getenv('MAIL_HOST');
+            $mail->SMTPAuth   = !empty($_ENV['MAIL_USERNAME']) && $_ENV['MAIL_USERNAME'] !== 'null';
             if ($mail->SMTPAuth) {
-                $mail->Username   = getenv('MAIL_USERNAME');
-                $mail->Password   = getenv('MAIL_PASSWORD');
+                $mail->Username   = $_ENV['MAIL_USERNAME'] ?? getenv('MAIL_USERNAME');
+                $mail->Password   = $_ENV['MAIL_PASSWORD'] ?? getenv('MAIL_PASSWORD');
             }
-            if (getenv('MAIL_ENCRYPTION') && getenv('MAIL_ENCRYPTION') !== 'null') {
-                $mail->SMTPSecure = getenv('MAIL_ENCRYPTION');
+            if (!empty($_ENV['MAIL_ENCRYPTION']) && $_ENV['MAIL_ENCRYPTION'] !== 'null') {
+                $mail->SMTPSecure = $_ENV['MAIL_ENCRYPTION'] ?? getenv('MAIL_ENCRYPTION');
             }
-            $mail->Port       = getenv('MAIL_PORT') ?: 1025;
+            $mail->Port       = $_ENV['MAIL_PORT'] ?? getenv('MAIL_PORT') ?? 1025;
             
             // Zet debug uit in productie
             $mail->SMTPDebug = 0;
         }
 
-        $mailFrom = getenv('MAIL_FROM_ADDRESS') ?: 'noreply@vereniging-avg.nl';
-        $mailFromName = $person['campaign_name'] ?: (getenv('MAIL_FROM_NAME') ?: 'AVG Vragenlijsten');
+        $mailFrom = $_ENV['MAIL_FROM_ADDRESS'] ?? getenv('MAIL_FROM_ADDRESS') ?? 'noreply@vereniging-avg.nl';
+        $mailFromName = $person['campaign_name'] ?: ($_ENV['MAIL_FROM_NAME'] ?? getenv('MAIL_FROM_NAME') ?? 'AVG Vragenlijsten');
         
         $mail->setFrom($mailFrom, $mailFromName);
         $mail->addAddress($person['email'], $person['name']);
@@ -138,21 +137,41 @@ function sendCampaignEmail(array $person, string $type, string $appUrl, PDO $pdo
             $mail->addReplyTo($person['reply_to_email']);
         }
 
-        // Haal verenigingsgegevens op (via user)
-        $logoHtml = '';
         $contactPerson = $person['campaign_name'] ?: 'het bestuur';
-        if (!empty($person['user_id'])) {
+        $logoHtml = '';
+        
+        // Prioriteit voor logo: 1. Campagne logo, 2. Gebruiker logo
+        $finalLogoPath = $person['campaign_logo'] ?? null;
+        
+        if (!$finalLogoPath && !empty($person['user_id'])) {
             $stmtUser = $pdo->prepare('SELECT logo_path, contact_person FROM users WHERE id = ?');
             $stmtUser->execute([$person['user_id']]);
             $userData = $stmtUser->fetch();
             if ($userData) {
-                if (!empty($userData['logo_path'])) {
-                    $logoUrl = $appUrl . $userData['logo_path'];
-                    $logoHtml = '<div style="margin-bottom: 20px;"><img src="' . htmlspecialchars($logoUrl) . '" alt="' . htmlspecialchars($person['campaign_name']) . '" style="max-height: 100px;"></div>';
-                }
+                $finalLogoPath = $userData['logo_path'] ?? null;
                 if (!empty($userData['contact_person'])) {
                     $contactPerson = $userData['contact_person'];
                 }
+            }
+        }
+        
+        if ($finalLogoPath) {
+            // Path inside the Docker container
+            $localImagePath = __DIR__ . '/../public' . $finalLogoPath;
+            
+            if (file_exists($localImagePath)) {
+                try {
+                    $mail->addEmbeddedImage($localImagePath, 'logo_cid');
+                    $logoHtml = '<div style="margin-bottom: 20px;"><img src="cid:logo_cid" alt="' . htmlspecialchars($person['campaign_name']) . '" style="max-height: 100px;"></div>';
+                } catch (Exception $e) {
+                    // Fallback to URL if embedding fails
+                    $logoUrl = $appUrl . $finalLogoPath;
+                    $logoHtml = '<div style="margin-bottom: 20px;"><img src="' . htmlspecialchars($logoUrl) . '" alt="' . htmlspecialchars($person['campaign_name']) . '" style="max-height: 100px;"></div>';
+                }
+            } else {
+                // Fallback to URL if local file not found
+                $logoUrl = $appUrl . $finalLogoPath;
+                $logoHtml = '<div style="margin-bottom: 20px;"><img src="' . htmlspecialchars($logoUrl) . '" alt="' . htmlspecialchars($person['campaign_name']) . '" style="max-height: 100px;"></div>';
             }
         }
 
@@ -192,8 +211,8 @@ function sendCampaignEmail(array $person, string $type, string $appUrl, PDO $pdo
                     <div style="margin-bottom: 30px;">
                         ' . nl2br($bodyContent) . '
                     </div>
-                    <div style="font-size: 0.8em; color: #777; border-top: 1px solid #eee; padding-top: 20px;">
-                        Deze e-mail is verzonden door ' . htmlspecialchars($person['campaign_name'] ?: 'uw vereniging') . ' via het AVG Vragenlijsten platform.
+                    <div style="font-size: 0.8em; color: #777; margin-top: 30px; border-top: 1px dashed #eee; padding-top: 10px;">
+                        Deze e-mail is verzonden via het AVG Vragenlijsten platform.
                     </div>
                 </div>
             </body>
