@@ -1,0 +1,14 @@
+# Environment variables
+.env
+.env.example
+
+# Composer
+vendor/
+
+# PHP
+composer.lock
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
