@@ -2,7 +2,7 @@
 	<div class="container">
 		<div class="logo">
 			<i data-lucide="shield-check"></i>
-			<a href="/index.php">AVG Verenigingen</a>
+			<a href="{% if session.user_id %}/dashboard{% else %}/{% endif %}">AVG Verenigingen</a>
 		</div>
 
 		<button class="menu-toggle" aria-label="Toggle menu">
