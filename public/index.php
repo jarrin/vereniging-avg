@@ -705,7 +705,7 @@ if ($path === '/' || $path === '/index.php') {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo = Database::getConnection();
         $username = $_POST['username'] ?? '';
-        $email = $_POST['email'] ?? '';
+        $new_email = trim($_POST['email'] ?? '');
         $contact_person = $_POST['contact_person'] ?? '';
         $phone = $_POST['phone'] ?? '';
         $use_phone = isset($_POST['use_phone']) ? 1 : 0;
@@ -726,22 +726,83 @@ if ($path === '/' || $path === '/index.php') {
         }
         
         if ($logoPath) {
-            $stmt = $pdo->prepare('UPDATE users SET username = ?, email = ?, contact_person = ?, phone = ?, use_phone = ?, logo_path = ? WHERE id = ?');
-            $stmt->execute([$username, $email, $contact_person, $phone, $use_phone, $logoPath, $_SESSION['user_id']]);
+            $stmt = $pdo->prepare('UPDATE users SET username = ?, contact_person = ?, phone = ?, use_phone = ?, logo_path = ? WHERE id = ?');
+            $stmt->execute([$username, $contact_person, $phone, $use_phone, $logoPath, $_SESSION['user_id']]);
         } else {
-            $stmt = $pdo->prepare('UPDATE users SET username = ?, email = ?, contact_person = ?, phone = ?, use_phone = ? WHERE id = ?');
-            $stmt->execute([$username, $email, $contact_person, $phone, $use_phone, $_SESSION['user_id']]);
+            $stmt = $pdo->prepare('UPDATE users SET username = ?, contact_person = ?, phone = ?, use_phone = ? WHERE id = ?');
+            $stmt->execute([$username, $contact_person, $phone, $use_phone, $_SESSION['user_id']]);
         }
         
+        // Handle email change
+        $stmtUser = $pdo->prepare("SELECT email FROM users WHERE id = ?");
+        $stmtUser->execute([$_SESSION['user_id']]);
+        $currentEmail = $stmtUser->fetchColumn();
+
+        if (!empty($new_email) && $new_email !== $currentEmail && filter_var($new_email, FILTER_VALIDATE_EMAIL)) {
+            $token = bin2hex(random_bytes(32));
+            $stmtEmail = $pdo->prepare("UPDATE users SET pending_email = ?, email_verification_token = ?, email_verification_expires_at = DATE_ADD(NOW(), INTERVAL 24 HOUR) WHERE id = ?");
+            $stmtEmail->execute([$new_email, $token, $_SESSION['user_id']]);
+
+            require_once __DIR__ . '/../app/Services/EmailService.php';
+            $appUrl = rtrim($_ENV['APP_URL'] ?? getenv('APP_URL') ?: 'http://localhost:8080', '/');
+            $verifyLink = $appUrl . "/instellingen/verify-email?token=" . $token;
+
+            $subject = "Bevestig uw nieuwe e-mailadres voor AVG Verenigingen";
+            $body = '
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    <h3>Bevestig E-mailadres</h3>
+                    <p>Beste gebruiker,</p>
+                    <p>U heeft onlangs aangevraagd om uw e-mailadres voor AVG Verenigingen te wijzigen naar dit adres.</p>
+                    <p>Klik op de onderstaande link om deze wijziging te bevestigen:</p>
+                    <p><a href="' . htmlspecialchars($verifyLink) . '" style="display:inline-block; padding: 10px 20px; background-color: #14b8a6; color: #fff; text-decoration: none; border-radius: 5px;">E-mailadres bevestigen</a></p>
+                    <p>Deze link is 24 uur geldig.</p>
+                </div>
+            </body>
+            </html>';
+
+            \App\Services\EmailService::send($new_email, $subject, $body);
+            $_SESSION['pending_email'] = $new_email;
+            header('Location: /instellingen?message=profile_updated_email_pending');
+            exit;
+        }
+
         // Update session
         $_SESSION['username'] = $username;
-        $_SESSION['email'] = $email;
         if ($logoPath) {
             $_SESSION['logo_path'] = $logoPath;
         }
         
         header('Location: /instellingen?message=profile_updated');
         exit;
+    }
+} elseif ($path === '/instellingen/verify-email') {
+    if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
+    $token = $_GET['token'] ?? '';
+    if (!$token) {
+        die("Geen token opgegeven.");
+    }
+
+    $pdo = Database::getConnection();
+    $stmt = $pdo->prepare("SELECT id, pending_email FROM users WHERE email_verification_token = ? AND email_verification_expires_at > NOW()");
+    $stmt->execute([$token]);
+    $userRow = $stmt->fetch();
+
+    if ($userRow && !empty($userRow['pending_email'])) {
+        // Complete the update
+        $updateStmt = $pdo->prepare("UPDATE users SET email = ?, pending_email = NULL, email_verification_token = NULL, email_verification_expires_at = NULL WHERE id = ?");
+        $updateStmt->execute([$userRow['pending_email'], $userRow['id']]);
+
+        if ($userRow['id'] === $_SESSION['user_id']) {
+            $_SESSION['email'] = $userRow['pending_email'];
+            unset($_SESSION['pending_email']);
+        }
+        
+        header('Location: /instellingen?message=email_verified_success');
+        exit;
+    } else {
+        die("Deze verificatielink is ongeldig of verlopen.");
     }
 } else {
     // Protected pages - require login
