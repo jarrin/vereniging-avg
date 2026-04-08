@@ -5,6 +5,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 use Dotenv\Dotenv;
+use App\Services\CsrfToken;
 
 // Load environment variables
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
@@ -27,9 +28,23 @@ $twig = new Environment($loader, [
 ]);
 $twig->addGlobal('session', $_SESSION);
 
+// Add CSRF token to Twig globals for all templates
+CsrfToken::generate();
+$twig->addGlobal('csrf_token', CsrfToken::get());
+$twig->addGlobal('csrf_field_name', CsrfToken::getFieldName());
+
 // Check if user is logged in
 require_once __DIR__ . '/../controllers/Authcontroller.php';
 $isLoggedIn = AuthController::isLoggedIn();
+
+// CSRF Protection - Validate tokens on POST requests (except cron)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!CsrfToken::validate()) {
+        // CSRF token is invalid
+        http_response_code(403);
+        die(json_encode(['success' => false, 'error' => 'CSRF token validation failed']));
+    }
+}
 
 // Basic routing (very simple for now)
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
