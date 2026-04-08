@@ -46,7 +46,27 @@
                     <p class="settings-desc">Pas uw verenigingsgegevens aan voor gebruik in e-mails.</p>
                 </div>
                 <div class="settings-card">
+                    <div class="profile-header-preview" style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #e2e8f0;">
+                        <div id="profileAvatarPreview" class="profile-avatar-large" style="width: 80px; height: 80px; border-radius: 12px; background: rgba(20, 184, 166, 0.1); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #e2e8f0;">
+                            {% if user.logo_path %}
+                                <img src="{{ user.logo_path }}" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                                <i data-lucide="user" size="40" style="color: #14b8a6;"></i>
+                            {% endif %}
+                        </div>
+                        <div class="profile-info-stat">
+                            <h3 style="margin: 0; font-size: 1.25rem; color: #1e293b;">{{ user.username }}</h3>
+                            <p style="margin: 0; color: #64748b; font-size: 0.9rem;">{{ user.email }}</p>
+                        </div>
+                    </div>
+
                     <form method="post" action="/instellingen/update-profile" class="settings-form" enctype="multipart/form-data">
+                        <input type="hidden" name="{{ csrf_field_name }}" value="{{ csrf_token }}">
+                        <div class="form-group mb-4">
+                            <label for="logo">Profielfoto / Verenigingslogo (.jpg)</label>
+                            <input type="file" id="logo" name="logo" class="campaign-form-input" accept=".jpg,.jpeg">
+                            <small class="form-hint">Upload een logo of profielfoto voor herkenbaarheid in de zijbalk en e-mails.</small>
+                        </div>
                         <div class="form-group row mb-4">
                             <div class="col-half">
                                 <label for="username">Verenigingsnaam</label>
@@ -56,6 +76,12 @@
                             <div class="col-half">
                                 <label for="email">E-mailadres (Beheer)</label>
                                 <input type="email" id="email" name="email" class="campaign-form-input" value="{{ user.email|default('') }}">
+                                {% if user.pending_email %}
+                                    <small class="form-hint" style="color: #f59e0b; margin-top: 5px; display: block;">
+                                        <i data-lucide="clock" size="14" style="vertical-align: middle; margin-right: 4px;"></i>
+                                        Wachtend op bevestiging: <strong>{{ user.pending_email }}</strong>. Check uw inbox op dit nieuwe adres.
+                                    </small>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="form-group row mb-4">
@@ -73,17 +99,6 @@
                                 <input type="checkbox" id="use_phone" name="use_phone" value="1" {{ user.use_phone ? 'checked' : '' }}>
                                 <label for="use_phone">Telefoonnummer tonen aan leden</label>
                             </div>
-                        </div>
-                        <div class="form-group mb-4">
-                            <label for="logo">Verenigingslogo (.jpg)</label>
-                            {% if user.logo_path %}
-                                <div class="current-logo mb-2" style="margin-bottom: 1rem;">
-                                    <img src="{{ user.logo_path }}" alt="Huidig logo" style="max-height: 80px; border: 1px solid #ddd; border-radius: 4px; padding: 4px;">
-                                    <p class="form-hint" style="font-size: 0.75rem;">Huidig logo</p>
-                                </div>
-                            {% endif %}
-                            <input type="file" id="logo" name="logo" class="campaign-form-input" accept=".jpg,.jpeg">
-                            <small class="form-hint">Het logo moet een JPG bestand zijn.</small>
                         </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Profiel bijwerken</button>
@@ -163,6 +178,21 @@
     openBtn?.addEventListener('click', openSidebar);
     closeBtn?.addEventListener('click', closeSidebar);
     backdrop?.addEventListener('click', closeSidebar);
+
+    // Live preview for profile photo
+    const logoInput = document.getElementById('logo');
+    const previewContainer = document.getElementById('profileAvatarPreview');
+
+    logoInput?.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewContainer.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width: 100%; height: 100%; object-fit: cover;">`;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
 </script>
 {% endblock %}
 {% endblock %}

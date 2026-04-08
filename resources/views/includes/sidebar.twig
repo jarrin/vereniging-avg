@@ -30,15 +30,19 @@
         </nav>
 
         <div class="sidebar-footer">
-            <div class="sidebar-user">
+            <a href="/instellingen" class="sidebar-user">
                 <div class="sidebar-avatar">
-                    <i data-lucide="user"></i>
+                    {% if session.logo_path %}
+                        <img src="{{ session.logo_path }}" alt="Logo" class="sidebar-avatar-img">
+                    {% else %}
+                        <i data-lucide="user"></i>
+                    {% endif %}
                 </div>
                 <div class="sidebar-user-info">
-                    <p class="sidebar-user-name">Secretaris</p>
-                    <p class="sidebar-user-email">vereniging@avg.nl</p>
+                    <p class="sidebar-user-name">{{ session.username }}</p>
+                    <p class="sidebar-user-email">{{ session.email }}</p>
                 </div>
-            </div>
+            </a>
             <a href="/logout" class="sidebar-logout" title="Uitloggen">
                 <i data-lucide="log-out"></i>
             </a>

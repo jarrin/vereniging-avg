@@ -18,7 +18,7 @@ class Campaign
     public $start_date;
     public $end_date;
     public $report_generated_at;
-    public $auto_delete_at;
+    public $logo_path;
     public $status;
     public $created_at;
 
@@ -39,7 +39,7 @@ class Campaign
             $this->start_date = $data['start_date'] ?? null;
             $this->end_date = $data['end_date'] ?? null;
             $this->report_generated_at = $data['report_generated_at'] ?? null;
-            $this->auto_delete_at = $data['auto_delete_at'] ?? null;
+            $this->logo_path = $data['logo_path'] ?? null;
             $this->status = $data['status'] ?? 'draft';
             $this->created_at = $data['created_at'] ?? null;
         }
@@ -111,7 +111,7 @@ class Campaign
     /**
      * Create a new campaign
      */
-    public static function create(string $user_id, string $name, string $reply_to_email = '', string $email_subject = '', string $email_body = ''): array
+    public static function create(string $user_id, string $name, string $reply_to_email = '', string $email_subject = '', string $email_body = '', string $logo_path = ''): array
     {
         if (!$user_id || !$name) {
             return ['success' => false, 'message' => 'Vul alle verplichte velden in.'];
@@ -121,8 +121,8 @@ class Campaign
         $id = uniqid('', true);
 
         try {
-            $stmt = $pdo->prepare('INSERT INTO campaigns (id, user_id, name, reply_to_email, email_subject, email_body, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())');
-            $stmt->execute([$id, $user_id, $name, $reply_to_email, $email_subject, $email_body, 'draft']);
+            $stmt = $pdo->prepare('INSERT INTO campaigns (id, user_id, name, logo_path, reply_to_email, email_subject, email_body, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())');
+            $stmt->execute([$id, $user_id, $name, $logo_path, $reply_to_email, $email_subject, $email_body, 'draft']);
             return ['success' => true, 'message' => 'Campagne aangemaakt.', 'id' => $id];
         } catch (\PDOException $e) {
             return ['success' => false, 'message' => 'Database fout: ' . $e->getMessage()];
@@ -136,9 +136,10 @@ class Campaign
     {
         try {
             $pdo = Database::getConnection();
-            $stmt = $pdo->prepare('UPDATE campaigns SET name = ?, reply_to_email = ?, email_subject = ?, email_body = ?, reminder_subject = ?, reminder_body = ?, status = ?, reminder_enabled = ?, reminder_days = ?, non_response_action = ?, start_date = ?, end_date = ? WHERE id = ?');
+            $stmt = $pdo->prepare('UPDATE campaigns SET name = ?, logo_path = ?, reply_to_email = ?, email_subject = ?, email_body = ?, reminder_subject = ?, reminder_body = ?, status = ?, reminder_enabled = ?, reminder_days = ?, non_response_action = ?, start_date = ?, end_date = ? WHERE id = ?');
             $stmt->execute([
                 $this->name,
+                $this->logo_path,
                 $this->reply_to_email,
                 $this->email_subject,
                 $this->email_body,

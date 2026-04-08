@@ -5,6 +5,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 use Dotenv\Dotenv;
+use App\Services\CsrfToken;
 
 // Load environment variables
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
@@ -27,9 +28,23 @@ $twig = new Environment($loader, [
 ]);
 $twig->addGlobal('session', $_SESSION);
 
+// Add CSRF token to Twig globals for all templates
+CsrfToken::generate();
+$twig->addGlobal('csrf_token', CsrfToken::get());
+$twig->addGlobal('csrf_field_name', CsrfToken::getFieldName());
+
 // Check if user is logged in
 require_once __DIR__ . '/../controllers/Authcontroller.php';
 $isLoggedIn = AuthController::isLoggedIn();
+
+// CSRF Protection - Validate tokens on POST requests (except cron)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!CsrfToken::validate()) {
+        // CSRF token is invalid
+        http_response_code(403);
+        die(json_encode(['success' => false, 'error' => 'CSRF token validation failed']));
+    }
+}
 
 // Basic routing (very simple for now)
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -212,15 +227,23 @@ if ($action === 'login') {
         // SEND CONFIRMATION EMAIL
         // ---------------------------------------------------------
         require_once __DIR__ . '/../app/Services/EmailService.php';
-        $appUrl = rtrim(getenv('APP_URL') ?: 'http://localhost/vereniging-avg', '/');
+        $appUrl = rtrim($_ENV['APP_URL'] ?? getenv('APP_URL') ?: 'http://localhost:8080', '/');
         
-        // Haal logo op van de vereniging (user)
+        // Haal logo op: Prioriteit 1: Campagne logo, Prioriteit 2: Gebruiker logo
         $logoHtml = '';
-        $stmtUser = $pdo->prepare('SELECT logo_path FROM users WHERE id = ?');
-        $stmtUser->execute([$campaign->user_id]);
-        $userData = $stmtUser->fetch();
-        if ($userData && !empty($userData['logo_path'])) {
-            $logoUrl = $appUrl . $userData['logo_path'];
+        $finalLogoPath = $campaign->logo_path;
+        
+        if (!$finalLogoPath) {
+            $stmtUser = $pdo->prepare('SELECT logo_path FROM users WHERE id = ?');
+            $stmtUser->execute([$campaign->user_id]);
+            $userData = $stmtUser->fetch();
+            if ($userData && !empty($userData['logo_path'])) {
+                $finalLogoPath = $userData['logo_path'];
+            }
+        }
+        
+        if ($finalLogoPath) {
+            $logoUrl = $appUrl . $finalLogoPath;
             $logoHtml = '<div style="margin-bottom: 20px;"><img src="' . htmlspecialchars($logoUrl) . '" alt="' . htmlspecialchars($campaign->name) . '" style="max-height: 100px;"></div>';
         }
 
@@ -300,14 +323,35 @@ if ($path === '/' || $path === '/index.php') {
     }
     
     // General stats
-    $stmtTotalAll = $pdo->prepare('SELECT COUNT(*) as total FROM persons p JOIN campaigns c ON p.campaign_id = c.id WHERE c.user_id = ?');
-    $stmtTotalAll->execute([$_SESSION['user_id']]);
-    $totalMembers = $stmtTotalAll->fetch()['total'];
+    $stmtStats = $pdo->prepare('
+        SELECT 
+            COUNT(p.id) as total_members,
+            SUM(CASE WHEN p.responded_at IS NOT NULL THEN 1 ELSE 0 END) as total_responded,
+            (SELECT COUNT(*) FROM campaigns WHERE user_id = ? AND status = "active") as active_campaigns
+        FROM campaigns c
+        LEFT JOIN persons p ON c.id = p.campaign_id
+        WHERE c.user_id = ? AND c.status != "deleted"
+    ');
+    $stmtStats->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
+    $stats = $stmtStats->fetch();
     
+    $totalMembers = $stats['total_members'] ?? 0;
+    $totalResponded = $stats['total_responded'] ?? 0;
+    $totalWaiting = $totalMembers - $totalResponded;
+    $activeCampaigns = $stats['active_campaigns'] ?? 0;
+    
+    $respondedPct = $totalMembers > 0 ? round(($totalResponded / $totalMembers) * 100) : 0;
+    $waitingPct = $totalMembers > 0 ? round(($totalWaiting / $totalMembers) * 100) : 100;
+
     echo $twig->render('dashboard.twig', [
         'title' => 'Dashboard - AVG Verenigingen',
         'campaigns' => $campaigns,
         'total_members' => $totalMembers,
+        'total_responded' => $totalResponded,
+        'total_waiting' => $totalWaiting,
+        'responded_pct' => $respondedPct,
+        'waiting_pct' => $waitingPct,
+        'active_campaigns_count' => $activeCampaigns,
         'message' => $_GET['message'] ?? null,
     ]);
 } elseif ($path === '/campagne/nieuw') {
@@ -377,7 +421,8 @@ if ($path === '/' || $path === '/index.php') {
                 $data['org_name'] ?? 'Nieuwe Campagne',
                 $data['reply_to_email'] ?? '',
                 $data['email_subject'] ?? '',
-                $data['email_body'] ?? ''
+                $data['email_body'] ?? '',
+                $data['logo_path'] ?? ''
             );
         }
         
@@ -388,6 +433,7 @@ if ($path === '/' || $path === '/index.php') {
             $campaign->reply_to_email = $data['reply_to_email'] ?? $campaign->reply_to_email;
             $campaign->email_subject = $data['email_subject'] ?? $campaign->email_subject;
             $campaign->email_body = $data['email_body'] ?? $campaign->email_body;
+            $campaign->logo_path = $data['logo_path'] ?? $campaign->logo_path;
             $campaign->end_date = $data['end_date'] ?? null;
             $campaign->reminder_subject = $data['reminder_subject'] ?? '';
             $campaign->reminder_body = $data['email_signature'] ?? ''; 
@@ -424,13 +470,44 @@ if ($path === '/' || $path === '/index.php') {
             require_once __DIR__ . '/../models/Person.php';
             
             if (!empty($_FILES['member_list']['name'])) {
+                $filePath = $_FILES['member_list']['tmp_name'];
+                $ext = strtolower(pathinfo($_FILES['member_list']['name'], PATHINFO_EXTENSION));
+                
+                // Validate headers
+                $validHeaders = false;
+                if ($ext === 'csv') {
+                    if (($handle = fopen($filePath, "r")) !== FALSE) {
+                        $header = fgetcsv($handle, 1000, ",");
+                        fclose($handle);
+                        if ($header && count($header) >= 2 && in_array('Naam', $header) && in_array('E-mail', $header)) {
+                            $validHeaders = true;
+                        }
+                    }
+                } else {
+                    try {
+                        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+                        $worksheet = $spreadsheet->getActiveSheet();
+                        $firstRow = $worksheet->rangeToArray('A1:Z1')[0];
+                        if ($firstRow && count($firstRow) >= 2 && in_array('Naam', $firstRow) && in_array('E-mail', $firstRow)) {
+                            $validHeaders = true;
+                        }
+                    } catch (\Exception $e) {
+                        // Handle load error
+                    }
+                }
+                
+                if (!$validHeaders) {
+                    $_SESSION['error'] = 'Het bestand moet kolommen bevatten met de namen "Naam" en "E-mail" in de eerste rij.';
+                    header('Location: /campagne/form/ledenlijst');
+                    exit;
+                }
+                
                 try {
-                    $filePath = $_FILES['member_list']['tmp_name'];
-                    $ext = strtolower(pathinfo($_FILES['member_list']['name'], PATHINFO_EXTENSION));
-                    
                     if ($ext === 'csv') {
                         if (($handle = fopen($filePath, "r")) !== FALSE) {
+                            $first = true;
                             while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                                if ($first) { $first = false; continue; } // Skip header
                                 if (count($row) >= 2 && !empty($row[0]) && !empty($row[1])) {
                                     Person::register($row[0], $row[1], $campaignId);
                                 }
@@ -451,16 +528,27 @@ if ($path === '/' || $path === '/index.php') {
                     }
                 } catch (\Exception $e) {
                     error_log("Ledenlijst upload fout: " . $e->getMessage());
+                    $_SESSION['error'] = 'Er is een fout opgetreden bij het verwerken van het bestand.';
+                    header('Location: /campagne/form/ledenlijst');
+                    exit;
                 }
             } elseif (!empty($data['manual_list'])) {
                 // Process manual list from textarea
-                $lines = explode("\n", $data['manual_list']);
+                // Repair broken copy-paste where a newline immediately follows a comma
+                $manualList = preg_replace('/,\s*[\r\n]+/', ',', $data['manual_list']);
+                $lines = explode("\n", $manualList);
+                
                 foreach ($lines as $line) {
                     $line = trim($line);
                     if (empty($line)) continue;
                     
-                    // Allow both comma and semicolon
-                    $separator = strpos($line, ';') !== false ? ';' : ',';
+                    // Allow comma, semicolon OR tab
+                    if (strpos($line, "\t") !== false) {
+                        $separator = "\t";
+                    } else {
+                        $separator = strpos($line, ';') !== false ? ';' : ',';
+                    }
+                    
                     $parts = explode($separator, $line);
                     
                     if (count($parts) >= 2) {
@@ -482,7 +570,9 @@ if ($path === '/' || $path === '/index.php') {
     }
     echo $twig->render('nieuwe_campagne/ledenlijst.twig', [
         'title' => 'Ledenlijst - AVG Verenigingen',
+        'error' => $_SESSION['error'] ?? null
     ]);
+    unset($_SESSION['error']);
 } elseif ($path === '/rapportages') {
     if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
     $pdo = Database::getConnection();
@@ -517,15 +607,32 @@ if ($path === '/' || $path === '/index.php') {
     $stmtQ->execute([$campaignId]);
     $questions = $stmtQ->fetchAll();
     
-    // Get persons
-    $persons = Person::getAllByCampaign($campaignId);
+    // Get persons with their saved answers
+    $persons = Person::getAllByCampaignWithAnswers($campaignId);
     
     echo $twig->render('campaign_view.twig', [
         'title' => 'Campagne Details - ' . $campaign->name,
         'campaign' => $campaign,
         'questions' => $questions,
-        'persons' => $persons
+        'persons' => $persons,
+        'message' => $_GET['message'] ?? null
     ]);
+} elseif ($path === '/campagne/lid/toevoegen') {
+    if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        require_once __DIR__ . '/../models/Person.php';
+        $campaignId = $_POST['campaign_id'];
+        $name = trim($_POST['name']);
+        $email = trim($_POST['email']);
+        
+        if (!empty($name) && !empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            Person::register($name, $email, $campaignId);
+            header("Location: /campagne/view/$campaignId?message=lid_toegevoegd");
+        } else {
+            header("Location: /campagne/view/$campaignId?error=invalid_data");
+        }
+        exit;
+    }
 } elseif (preg_match('/^\/campagne\/edit\/(.+)$/', $path, $matches)) {
     if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
     require_once __DIR__ . '/../models/Campaign.php';
@@ -581,8 +688,10 @@ if ($path === '/' || $path === '/index.php') {
             $pdo->prepare('UPDATE campaigns SET auto_delete_at = DATE_ADD(NOW(), INTERVAL 24 HOUR) WHERE id = ? AND auto_delete_at IS NULL')
                 ->execute([$campaignId]);
                 
+            if (ob_get_level() > 0) ob_end_clean();
+            $safeFileName = preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', basename($fullPath));
             header('Content-Type: text/csv');
-            header('Content-Disposition: attachment; filename="' . basename($fullPath) . '"');
+            header('Content-Disposition: attachment; filename="' . $safeFileName . '"');
             readfile($fullPath);
             exit;
         }
@@ -600,15 +709,18 @@ if ($path === '/' || $path === '/index.php') {
     $stmtP->execute([$campaignId]);
     $persons = $stmtP->fetchAll();
     
-    header('Content-Type: text/csv');
-    header('Content-Disposition: attachment; filename="live_rapport_' . strtolower(str_replace(' ', '_', $campaign->name)) . '.csv"');
+    if (ob_get_level() > 0) ob_end_clean();
+    $safeName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $campaign->name ?? 'campagne');
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="live_rapport_' . strtolower($safeName) . '.csv"');
     
     $output = fopen('php://output', 'w');
+    fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
     
     // Header
     $header = ['Naam', 'E-mail', 'Status', 'Gereageerd op'];
     foreach ($questions as $q) { $header[] = $q['question_text']; }
-    fputcsv($output, $header);
+    fputcsv($output, $header, ';');
     
     foreach ($persons as $person) {
         $row = [$person['name'], $person['email'], $person['email_status'], $person['responded_at']];
@@ -618,7 +730,7 @@ if ($path === '/' || $path === '/index.php') {
             $ans = $stmtA->fetch();
             $row[] = $ans ? ($ans['answer'] ? 'Ja' : 'Nee') : '-';
         }
-        fputcsv($output, $row);
+        fputcsv($output, $row, ';');
     }
     fclose($output);
     exit;
@@ -644,7 +756,7 @@ if ($path === '/' || $path === '/index.php') {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo = Database::getConnection();
         $username = $_POST['username'] ?? '';
-        $email = $_POST['email'] ?? '';
+        $new_email = trim($_POST['email'] ?? '');
         $contact_person = $_POST['contact_person'] ?? '';
         $phone = $_POST['phone'] ?? '';
         $use_phone = isset($_POST['use_phone']) ? 1 : 0;
@@ -665,19 +777,83 @@ if ($path === '/' || $path === '/index.php') {
         }
         
         if ($logoPath) {
-            $stmt = $pdo->prepare('UPDATE users SET username = ?, email = ?, contact_person = ?, phone = ?, use_phone = ?, logo_path = ? WHERE id = ?');
-            $stmt->execute([$username, $email, $contact_person, $phone, $use_phone, $logoPath, $_SESSION['user_id']]);
+            $stmt = $pdo->prepare('UPDATE users SET username = ?, contact_person = ?, phone = ?, use_phone = ?, logo_path = ? WHERE id = ?');
+            $stmt->execute([$username, $contact_person, $phone, $use_phone, $logoPath, $_SESSION['user_id']]);
         } else {
-            $stmt = $pdo->prepare('UPDATE users SET username = ?, email = ?, contact_person = ?, phone = ?, use_phone = ? WHERE id = ?');
-            $stmt->execute([$username, $email, $contact_person, $phone, $use_phone, $_SESSION['user_id']]);
+            $stmt = $pdo->prepare('UPDATE users SET username = ?, contact_person = ?, phone = ?, use_phone = ? WHERE id = ?');
+            $stmt->execute([$username, $contact_person, $phone, $use_phone, $_SESSION['user_id']]);
         }
         
+        // Handle email change
+        $stmtUser = $pdo->prepare("SELECT email FROM users WHERE id = ?");
+        $stmtUser->execute([$_SESSION['user_id']]);
+        $currentEmail = $stmtUser->fetchColumn();
+
+        if (!empty($new_email) && $new_email !== $currentEmail && filter_var($new_email, FILTER_VALIDATE_EMAIL)) {
+            $token = bin2hex(random_bytes(32));
+            $stmtEmail = $pdo->prepare("UPDATE users SET pending_email = ?, email_verification_token = ?, email_verification_expires_at = DATE_ADD(NOW(), INTERVAL 24 HOUR) WHERE id = ?");
+            $stmtEmail->execute([$new_email, $token, $_SESSION['user_id']]);
+
+            require_once __DIR__ . '/../app/Services/EmailService.php';
+            $appUrl = rtrim($_ENV['APP_URL'] ?? getenv('APP_URL') ?: 'http://localhost:8080', '/');
+            $verifyLink = $appUrl . "/instellingen/verify-email?token=" . $token;
+
+            $subject = "Bevestig uw nieuwe e-mailadres voor AVG Verenigingen";
+            $body = '
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    <h3>Bevestig E-mailadres</h3>
+                    <p>Beste gebruiker,</p>
+                    <p>U heeft onlangs aangevraagd om uw e-mailadres voor AVG Verenigingen te wijzigen naar dit adres.</p>
+                    <p>Klik op de onderstaande link om deze wijziging te bevestigen:</p>
+                    <p><a href="' . htmlspecialchars($verifyLink) . '" style="display:inline-block; padding: 10px 20px; background-color: #14b8a6; color: #fff; text-decoration: none; border-radius: 5px;">E-mailadres bevestigen</a></p>
+                    <p>Deze link is 24 uur geldig.</p>
+                </div>
+            </body>
+            </html>';
+
+            \App\Services\EmailService::send($new_email, $subject, $body);
+            $_SESSION['pending_email'] = $new_email;
+            header('Location: /instellingen?message=profile_updated_email_pending');
+            exit;
+        }
+
         // Update session
         $_SESSION['username'] = $username;
-        $_SESSION['email'] = $email;
+        if ($logoPath) {
+            $_SESSION['logo_path'] = $logoPath;
+        }
         
         header('Location: /instellingen?message=profile_updated');
         exit;
+    }
+} elseif ($path === '/instellingen/verify-email') {
+    if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
+    $token = $_GET['token'] ?? '';
+    if (!$token) {
+        die("Geen token opgegeven.");
+    }
+
+    $pdo = Database::getConnection();
+    $stmt = $pdo->prepare("SELECT id, pending_email FROM users WHERE email_verification_token = ? AND email_verification_expires_at > NOW()");
+    $stmt->execute([$token]);
+    $userRow = $stmt->fetch();
+
+    if ($userRow && !empty($userRow['pending_email'])) {
+        // Complete the update
+        $updateStmt = $pdo->prepare("UPDATE users SET email = ?, pending_email = NULL, email_verification_token = NULL, email_verification_expires_at = NULL WHERE id = ?");
+        $updateStmt->execute([$userRow['pending_email'], $userRow['id']]);
+
+        if ($userRow['id'] === $_SESSION['user_id']) {
+            $_SESSION['email'] = $userRow['pending_email'];
+            unset($_SESSION['pending_email']);
+        }
+        
+        header('Location: /instellingen?message=email_verified_success');
+        exit;
+    } else {
+        die("Deze verificatielink is ongeldig of verlopen.");
     }
 } else {
     // Protected pages - require login

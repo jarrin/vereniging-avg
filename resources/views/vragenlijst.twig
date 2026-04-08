@@ -310,6 +310,7 @@
                 </div>
                 
                 <form method="POST" action="">
+                    <input type="hidden" name="{{ csrf_field_name }}" value="{{ csrf_token }}">
                     {% for q in questions %}
                     <div class="question-block">
                         <div class="question-title">{{ q.question_text }}</div>

@@ -33,6 +33,7 @@
 					</div>
 
 					<form action="/campagne/form/vragen" method="POST">
+						<input type="hidden" name="{{ csrf_field_name }}" value="{{ csrf_token }}">
 						<div class="campaign-form-wrapper">
 						<div class="campaign-form-header">
 							<i data-lucide="help-circle" class="campaign-form-icon"></i>

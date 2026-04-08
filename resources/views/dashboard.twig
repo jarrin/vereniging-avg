@@ -53,10 +53,12 @@
                     <p class="stat-card-label">Totaal leden</p>
                     <p class="stat-card-value">{{ total_members }}</p>
                 </div>
+                <!-- 
                 <div class="stat-card-trend trend-up">
                     <i data-lucide="trending-up" size="14"></i>
-                    <span>+12%</span>
+                    <span>Totaal</span>
                 </div>
+                -->
             </div>
 
             <div class="stat-card">
@@ -65,11 +67,11 @@
                 </div>
                 <div class="stat-card-body">
                     <p class="stat-card-label">Gereageerd</p>
-                    <p class="stat-card-value">307</p>
+                    <p class="stat-card-value">{{ total_responded }}</p>
                 </div>
                 <div class="stat-card-trend trend-up">
                     <i data-lucide="trending-up" size="14"></i>
-                    <span>84%</span>
+                    <span>{{ responded_pct }}%</span>
                 </div>
             </div>
 
@@ -79,11 +81,11 @@
                 </div>
                 <div class="stat-card-body">
                     <p class="stat-card-label">Actieve campagnes</p>
-                    <p class="stat-card-value">{{ campaigns|length }}</p>
+                    <p class="stat-card-value">{{ active_campaigns_count }}</p>
                 </div>
                 <div class="stat-card-trend trend-neutral">
-                    <i data-lucide="minus" size="14"></i>
-                    <span>Stabiel</span>
+                    <i data-lucide="activity" size="14"></i>
+                    <span>Lopend</span>
                 </div>
             </div>
 
@@ -93,11 +95,11 @@
                 </div>
                 <div class="stat-card-body">
                     <p class="stat-card-label">Wacht op reactie</p>
-                    <p class="stat-card-value">58</p>
+                    <p class="stat-card-value">{{ total_waiting }}</p>
                 </div>
                 <div class="stat-card-trend trend-down">
                     <i data-lucide="trending-down" size="14"></i>
-                    <span>16%</span>
+                    <span>{{ waiting_pct }}%</span>
                 </div>
             </div>
         </div>
