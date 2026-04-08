@@ -61,6 +61,7 @@
                     </div>
 
                     <form method="post" action="/instellingen/update-profile" class="settings-form" enctype="multipart/form-data">
+                        <input type="hidden" name="{{ csrf_field_name }}" value="{{ csrf_token }}">
                         <div class="form-group mb-4">
                             <label for="logo">Profielfoto / Verenigingslogo (.jpg)</label>
                             <input type="file" id="logo" name="logo" class="campaign-form-input" accept=".jpg,.jpeg">
