@@ -571,8 +571,8 @@ if ($path === '/' || $path === '/index.php') {
     $stmtQ->execute([$campaignId]);
     $questions = $stmtQ->fetchAll();
     
-    // Get persons
-    $persons = Person::getAllByCampaign($campaignId);
+    // Get persons with their saved answers
+    $persons = Person::getAllByCampaignWithAnswers($campaignId);
     
     echo $twig->render('campaign_view.twig', [
         'title' => 'Campagne Details - ' . $campaign->name,

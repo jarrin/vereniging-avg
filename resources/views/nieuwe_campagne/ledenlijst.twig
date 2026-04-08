@@ -37,6 +37,7 @@
 					</div>
 
 					<form action="/campagne/form/ledenlijst" method="POST" enctype="multipart/form-data">
+						<input type="hidden" name="{{ csrf_field_name }}" value="{{ csrf_token }}">
 					<div class="campaign-form-wrapper">
 						<div class="campaign-form-header">
 							<i data-lucide="users" class="campaign-form-icon"></i>
