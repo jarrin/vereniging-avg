@@ -47,6 +47,10 @@
 							</div>
 						</div>
 
+						{% if error %}
+						<div class="error-message" style="color: red; margin-bottom: 1rem;">{{ error }}</div>
+						{% endif %}
+
 						<div class="campaign-form-group">
 							<div class="campaign-available-variables">
 								<span class="variables-label-inline">Bestandsformaat</span>
