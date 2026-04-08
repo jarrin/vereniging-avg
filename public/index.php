@@ -470,13 +470,44 @@ if ($path === '/' || $path === '/index.php') {
             require_once __DIR__ . '/../models/Person.php';
             
             if (!empty($_FILES['member_list']['name'])) {
+                $filePath = $_FILES['member_list']['tmp_name'];
+                $ext = strtolower(pathinfo($_FILES['member_list']['name'], PATHINFO_EXTENSION));
+                
+                // Validate headers
+                $validHeaders = false;
+                if ($ext === 'csv') {
+                    if (($handle = fopen($filePath, "r")) !== FALSE) {
+                        $header = fgetcsv($handle, 1000, ",");
+                        fclose($handle);
+                        if ($header && count($header) >= 2 && in_array('Naam', $header) && in_array('E-mail', $header)) {
+                            $validHeaders = true;
+                        }
+                    }
+                } else {
+                    try {
+                        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+                        $worksheet = $spreadsheet->getActiveSheet();
+                        $firstRow = $worksheet->rangeToArray('A1:Z1')[0];
+                        if ($firstRow && count($firstRow) >= 2 && in_array('Naam', $firstRow) && in_array('E-mail', $firstRow)) {
+                            $validHeaders = true;
+                        }
+                    } catch (\Exception $e) {
+                        // Handle load error
+                    }
+                }
+                
+                if (!$validHeaders) {
+                    $_SESSION['error'] = 'Het bestand moet kolommen bevatten met de namen "Naam" en "E-mail" in de eerste rij.';
+                    header('Location: /campagne/form/ledenlijst');
+                    exit;
+                }
+                
                 try {
-                    $filePath = $_FILES['member_list']['tmp_name'];
-                    $ext = strtolower(pathinfo($_FILES['member_list']['name'], PATHINFO_EXTENSION));
-                    
                     if ($ext === 'csv') {
                         if (($handle = fopen($filePath, "r")) !== FALSE) {
+                            $first = true;
                             while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                                if ($first) { $first = false; continue; } // Skip header
                                 if (count($row) >= 2 && !empty($row[0]) && !empty($row[1])) {
                                     Person::register($row[0], $row[1], $campaignId);
                                 }
@@ -497,6 +528,9 @@ if ($path === '/' || $path === '/index.php') {
                     }
                 } catch (\Exception $e) {
                     error_log("Ledenlijst upload fout: " . $e->getMessage());
+                    $_SESSION['error'] = 'Er is een fout opgetreden bij het verwerken van het bestand.';
+                    header('Location: /campagne/form/ledenlijst');
+                    exit;
                 }
             } elseif (!empty($data['manual_list'])) {
                 // Process manual list from textarea
@@ -536,7 +570,9 @@ if ($path === '/' || $path === '/index.php') {
     }
     echo $twig->render('nieuwe_campagne/ledenlijst.twig', [
         'title' => 'Ledenlijst - AVG Verenigingen',
+        'error' => $_SESSION['error'] ?? null
     ]);
+    unset($_SESSION['error']);
 } elseif ($path === '/rapportages') {
     if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
     $pdo = Database::getConnection();
