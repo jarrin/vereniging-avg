@@ -63,20 +63,26 @@
                                 <span class="status-pill pill-{{ person.email_status }}">
                                     {{ person.email_status }}
                                 </span>
+                                <div style="margin-top: 0.5rem; font-size: 0.95rem; color: #64748b;">
+                                    {% if person.responded_at %}
+                                        Gereageerd op {{ person.responded_at|date('d-m-Y H:i') }}
+                                    {% else %}
+                                        Nog geen reactie
+                                    {% endif %}
+                                </div>
                             </td>
-                            {# Note: Fetching individual answers inside a loop in twig is hard without a helper. 
-                               In a real app, I'd prepare this in the controller.
-                               For now, I'll just show if they responded. 
-                            #}
-                            {% if person.responded_at %}
-                                <td colspan="{{ questions|length }}" style="padding: 1rem; color: #16a34a;">
-                                    Gereageerd op {{ person.responded_at|date('d-m-Y H:i') }}
+                            {% for question in questions %}
+                                {% set answer = person.answers[question.id] ?? null %}
+                                <td style="padding: 1rem; color: {% if answer is same as(true) %}#16a34a{% elseif answer is same as(false) %}#dc2626{% else %}#64748b{% endif %};">
+                                    {% if answer is same as(true) %}
+                                        Ja
+                                    {% elseif answer is same as(false) %}
+                                        Nee
+                                    {% else %}
+                                        -
+                                    {% endif %}
                                 </td>
-                            {% else %}
-                                <td colspan="{{ questions|length }}" style="padding: 1rem; color: #64748b;">
-                                    Nog geen reactie
-                                </td>
-                            {% endif %}
+                            {% endfor %}
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -92,6 +98,7 @@
             <i data-lucide="user-plus" size="24"></i> Lid Toevoegen
         </h3>
         <form action="/campagne/lid/toevoegen" method="POST">
+            <input type="hidden" name="{{ csrf_field_name }}" value="{{ csrf_token }}">
             <input type="hidden" name="campaign_id" value="{{ campaign.id }}">
             <div style="margin-bottom: 1rem;">
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Volledige Naam *</label>

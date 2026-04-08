@@ -15,6 +15,7 @@ class Person
     public $reminder_sent_at;
     public $responded_at;
     public $created_at;
+    public $answers = [];
 
     public function __construct(array $data = [])
     {
@@ -30,6 +31,7 @@ class Person
             $this->reminder_sent_at = $data['reminder_sent_at'] ?? null;
             $this->responded_at = $data['responded_at'] ?? null;
             $this->created_at = $data['created_at'] ?? null;
+            $this->answers = $data['answers'] ?? [];
         }
     }
 
@@ -125,6 +127,32 @@ class Person
             $persons[] = new self($row);
         }
         return $persons;
+    }
+
+    public static function getAllByCampaignWithAnswers(string $campaign_id): array
+    {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare('SELECT * FROM persons WHERE campaign_id = ? ORDER BY created_at DESC');
+        $stmt->execute([$campaign_id]);
+        $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $persons = [];
+        $personIds = [];
+        foreach ($results as $row) {
+            $persons[$row['id']] = new self($row);
+            $personIds[] = $row['id'];
+        }
+
+        if (!empty($personIds)) {
+            $placeholders = implode(',', array_fill(0, count($personIds), '?'));
+            $stmtA = $pdo->prepare("SELECT person_id, question_id, answer FROM answers WHERE person_id IN ($placeholders)");
+            $stmtA->execute($personIds);
+            foreach ($stmtA->fetchAll(\PDO::FETCH_ASSOC) as $answerRow) {
+                $persons[$answerRow['person_id']]->answers[$answerRow['question_id']] = (bool)$answerRow['answer'];
+            }
+        }
+
+        return array_values($persons);
     }
 
     /**
