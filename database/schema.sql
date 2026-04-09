@@ -39,6 +39,7 @@ CREATE TABLE campaigns (
     non_response_action ENUM('send_reminder', 'default_no', 'no_action') DEFAULT 'no_action',
     start_date DATE,
     end_date DATE,
+    logo_path VARCHAR(255) NULL,
     report_generated_at TIMESTAMP NULL,
     auto_delete_at TIMESTAMP NULL,
     status ENUM('draft', 'active', 'paused', 'completed', 'deleted') DEFAULT 'draft',
@@ -48,6 +49,7 @@ CREATE TABLE campaigns (
 
 -- Migratie voor bestaande databases:
 -- ALTER TABLE users ADD COLUMN logo_path VARCHAR(255) NULL AFTER email;
+-- ALTER TABLE campaigns ADD COLUMN logo_path VARCHAR(255) NULL AFTER end_date;
 -- ALTER TABLE campaigns ADD COLUMN reply_to_email VARCHAR(255) NULL AFTER name;
 -- ALTER TABLE campaigns ADD COLUMN reminder_subject VARCHAR(255) NULL AFTER email_body;
 -- ALTER TABLE campaigns ADD COLUMN reminder_body TEXT NULL AFTER reminder_subject;
