@@ -10,8 +10,11 @@ RUN apt-get update && apt-get install -y \
     git \
     libzip-dev \
     libicu-dev \
+    libc-client-dev \
+    libkrb5-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd zip mysqli pdo pdo_mysql intl
+    && docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
+    && docker-php-ext-install gd zip mysqli pdo pdo_mysql intl imap
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
