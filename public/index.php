@@ -355,9 +355,11 @@ if ($path === '/' || $path === '/index.php') {
         'message' => $_GET['message'] ?? null,
     ]);
 } elseif ($path === '/campagne/nieuw') {
+    if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
     header('Location: /campagne/form/verenigingsgegevens');
     exit;
 } elseif ($path === '/campagne/form/verenigingsgegevens') {
+    if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['new_campaign'] = array_merge($_SESSION['new_campaign'] ?? [], $_POST);
         
@@ -371,6 +373,8 @@ if ($path === '/' || $path === '/index.php') {
             $targetPath = $uploadDir . $newFileName;
             
             if (move_uploaded_file($_FILES['logo']['tmp_name'], $targetPath)) {
+                // Resize the image to 200x200px
+                \App\Services\ImageService::resizeImage($targetPath, $targetPath, 200, 200);
                 $_SESSION['new_campaign']['logo_path'] = '/uploads/logos/' . $newFileName;
             }
         } elseif (!empty($_POST['existing_logo'])) {
@@ -384,6 +388,7 @@ if ($path === '/' || $path === '/index.php') {
         'title' => 'Verenigingsgegevens - AVG Verenigingen',
     ]);
 } elseif ($path === '/campagne/form/vragen') {
+    if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['new_campaign']['questions'] = $_POST['questions'] ?? [];
         header('Location: /campagne/form/email-tekst');
@@ -393,6 +398,7 @@ if ($path === '/' || $path === '/index.php') {
         'title' => 'Vragen - AVG Verenigingen',
     ]);
 } elseif ($path === '/campagne/form/email-tekst') {
+    if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['new_campaign'] = array_merge($_SESSION['new_campaign'] ?? [], $_POST);
         header('Location: /campagne/form/ledenlijst');
@@ -402,6 +408,7 @@ if ($path === '/' || $path === '/index.php') {
         'title' => 'E-mail Tekst - AVG Verenigingen',
     ]);
 } elseif ($path === '/campagne/form/ledenlijst') {
+    if (!$isLoggedIn) { header('Location: /index.php?action=login'); exit; }
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Collect all data
         $data = $_SESSION['new_campaign'] ?? [];
@@ -416,6 +423,9 @@ if ($path === '/' || $path === '/index.php') {
             $res = ['success' => true, 'id' => $campaignId];
             // No need to "create", we'll just update below
         } else {
+            if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+                die("Authentication required. Please log in first.");
+            }
             $res = Campaign::create(
                 $_SESSION['user_id'], 
                 $data['org_name'] ?? 'Nieuwe Campagne',
@@ -768,9 +778,12 @@ if ($path === '/' || $path === '/index.php') {
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
             
             $ext = strtolower(pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION));
-            if (in_array($ext, ['jpg', 'jpeg'])) {
+            if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif'])) {
                 $newFileName = 'logo_' . $_SESSION['user_id'] . '_' . time() . '.' . $ext;
-                if (move_uploaded_file($_FILES['logo']['tmp_name'], $uploadDir . $newFileName)) {
+                $targetPath = $uploadDir . $newFileName;
+                if (move_uploaded_file($_FILES['logo']['tmp_name'], $targetPath)) {
+                    // Resize the image to 200x200px
+                    \App\Services\ImageService::resizeImage($targetPath, $targetPath, 200, 200);
                     $logoPath = '/uploads/logos/' . $newFileName;
                 }
             }

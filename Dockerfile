@@ -1,20 +1,21 @@
 FROM php:8.2-apache
 
-# Install dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
+    libzip-dev \
+    libicu-dev \
+    libkrb5-dev \
     zip \
     unzip \
     git \
-    libzip-dev \
-    libicu-dev \
-    libc-client-dev \
-    libkrb5-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
-    && docker-php-ext-install gd zip mysqli pdo pdo_mysql intl imap
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure and install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd zip mysqli pdo pdo_mysql intl
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
