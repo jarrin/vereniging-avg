@@ -133,6 +133,10 @@ function sendCampaignEmail(array $person, string $type, string $appUrl, PDO $pdo
         $mail->setFrom($mailFrom, $mailFromName);
         $mail->addAddress($person['email'], $person['name']);
 
+        // Set bounce address for VERP-like bounce handling
+        $bounceDomain = $_ENV['BOUNCE_DOMAIN'] ?? getenv('BOUNCE_DOMAIN') ?? parse_url($appUrl, PHP_URL_HOST);
+        $mail->Sender = 'bounce+' . $person['id'] . '@' . $bounceDomain;
+
         if (!empty($person['reply_to_email'])) {
             $mail->addReplyTo($person['reply_to_email']);
         }
